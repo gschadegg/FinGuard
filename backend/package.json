@@ -5,6 +5,7 @@
     "venv": "py -3 -m venv .venv && .\\.venv\\Scripts\\pip.exe install -U pip",
     "activate": ".\\.venv\\Scripts\\Activate.ps1",
     "deactivate": "deactivate",
+    "req-freeze": ".\\.venv\\Scripts\\pip.exe freeze > requirements.txt",
     "install-deps": ".\\.venv\\Scripts\\pip.exe install -r requirements.txt",
     "dev": ".\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "test": ".\\.venv\\Scripts\\python.exe -m pytest",

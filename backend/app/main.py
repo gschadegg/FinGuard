@@ -20,7 +20,7 @@ async def read_item2(item_id: int):
     return {"item_id": item_id}
 
 @app.get("/items3/{item_id}")
-async def read_item(item_id3: str, q: str | None = None):
+async def read_item3(item_id: str, q: str | None = None):
     if q:
         return {"item_id": item_id, "q": q}
     return {"item_id": item_id}

@@ -9,6 +9,13 @@
     "install-deps": ".\\.venv\\Scripts\\pip.exe install -r requirements.txt",
     "dev": ".\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "test": ".\\.venv\\Scripts\\python.exe -m pytest",
-    "lint": ".\\.venv\\Scripts\\ruff.exe check ."
+    "lint": ".\\.venv\\Scripts\\ruff.exe check .",
+    "postman-login": "pnpm exec dotenv -e .env -- cross-env-shell \"postman login --with-api-key $POSTMAN_KEY\"",
+    "postman-run-collection": "pnpm exec dotenv -e .env -- cross-env-shell \"postman collection run postman/collections/FastAPI.postman_collection.json -e $POSTMAN_ENV_ID\"",
+    "postman-test": "pnpm run postman-login && pnpm run postman-run-collection"
+  },
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "dotenv-cli": "^10.0.0"
   }
 }

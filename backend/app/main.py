@@ -1,10 +1,21 @@
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import time
-app = FastAPI()
+
+from infrastructure.db.session import lifespan
+from app.api.v1.users import router as users_router
+
+app = FastAPI(lifespan=lifespan)
 
 # examples from doc notes
+app.include_router(users_router)
 
+
+
+#testing example endpoints with how they work in FastAPI
+@app.get("/health")
+async def health():
+    return {"ok": True}
 
 @app.get("/")
 async def root():

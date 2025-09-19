@@ -4,6 +4,8 @@ import time
 
 from infrastructure.db.session import lifespan
 from app.api.v1.users import router as users_router
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 
 app = FastAPI(lifespan=lifespan)
 
@@ -19,7 +21,8 @@ async def health():
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    content = jsonable_encoder({"message": "Hello World"})
+    return JSONResponse(content=content)
 
 @app.get("/items/{item_id}")
 async def read_item(item_id):

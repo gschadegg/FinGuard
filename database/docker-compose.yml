@@ -1,4 +1,4 @@
-# version: "3.9"
+# version: "3.9" # not sure if needed?
 services:
   db:
     image: postgres:16

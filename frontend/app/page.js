@@ -1,8 +1,30 @@
+'use client'
 import Image from 'next/image'
 import { ModeToggle } from '@/components/mode-toggle/ModeToggle'
 import Link from 'next/link'
+import { NextResponse } from 'next/server'
+import { useState } from 'react'
 
 export default function Home() {
+  const [dataResult, setData] = useState(null)
+  // async function GET() {
+  //   const res = await fetch(`${process.env.API_URL}/`, { cache: 'no-store' })
+  //   if (!res.ok) return NextResponse.json({ error: 'upstream error' }, { status: res.status })
+  //   const data = await res.json()
+  //   return NextResponse.json(data)
+  // }
+
+  // const pingApiTest = async () => {
+  //   const r = await fetch('/api/', { credentials: 'include' })
+  //   setRestResult(await r.json())
+  // }
+
+  const pingApiTest = async () => {
+    const r = await fetch('/api', { cache: 'no-store' })
+    const json = await r.json()
+    setData(json)
+  }
+
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -18,6 +40,10 @@ export default function Home() {
           height={38}
           priority
         />
+
+        <button onClick={pingApiTest}>Hit REST via Next proxy</button>
+        <pre>{dataResult ? JSON.stringify(dataResult, null, 2) : 'No result yet'}</pre>
+
         <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{' '}

@@ -2,22 +2,10 @@
 import Image from 'next/image'
 import { ModeToggle } from '@/components/mode-toggle/ModeToggle'
 import Link from 'next/link'
-import { NextResponse } from 'next/server'
 import { useState } from 'react'
 
 export default function Home() {
   const [dataResult, setData] = useState(null)
-  // async function GET() {
-  //   const res = await fetch(`${process.env.API_URL}/`, { cache: 'no-store' })
-  //   if (!res.ok) return NextResponse.json({ error: 'upstream error' }, { status: res.status })
-  //   const data = await res.json()
-  //   return NextResponse.json(data)
-  // }
-
-  // const pingApiTest = async () => {
-  //   const r = await fetch('/api/', { credentials: 'include' })
-  //   setRestResult(await r.json())
-  // }
 
   const pingApiTest = async () => {
     const r = await fetch('/api', { cache: 'no-store' })

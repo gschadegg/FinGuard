@@ -1,21 +1,19 @@
 ```mermaid
     sequenceDiagram
-        participant Client
-        participant API as app/api/users.py (Route)
-        participant Ctn as app/services_container.py (Services)
-        participant Svc as UserService
-        participant Repo as SqlUserRepo
-        participant DB as Postgres (User Model)
-
-        Client->>API: GET /users
-        API->>Ctn: Depends(get_user_service)
-        Ctn->>Repo: new SqlUserRepo(SessionLocal)
-        Ctn->>Svc: new UserService(repo)
-        API->>Svc: list_users()
-        Svc->>Repo: list()
-        Repo->>DB: SELECT * FROM users ORDER BY id
-        DB-->>Repo: rows (User Model)
-        Repo-->>Svc: [UserEntity...]
-        Svc-->>API: [UserEntity...]
-        API-->>Client: 200 OK (JSON)
+      participant Client
+      participant API as app/api/users.py (Route)
+      participant SVC as UserService
+      participant REPO as SqlUserRepo
+      participant ORM as User Model
+      participant DB as Postgres
+    
+      Client->>API: GET /users
+      API->>SVC: Depends(get_user_service)
+    
+      SVC->>REPO: list()
+      REPO->>DB: SELECT via DB Model
+      DB-->>REPO: rows (DB Model objects)
+      REPO-->>API: list of UserEntity
+    
+      API-->>Client: 200 OK (JSON)
 ```

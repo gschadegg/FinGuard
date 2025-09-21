@@ -4,15 +4,32 @@ import time
 
 from infrastructure.db.session import lifespan
 from app.api.v1.users import router as users_router
+from app.api.v1.plaid import router as plaid_router
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+
+from app.config import get_settings, Settings
+
+from plaid.model.sandbox_public_token_create_request import SandboxPublicTokenCreateRequest
+from fastapi import APIRouter, Depends, HTTPException, status
+
 
 app = FastAPI(lifespan=lifespan)
 
 # examples from doc notes
 app.include_router(users_router)
+app.include_router(plaid_router)
 
 
+
+@app.get("/debug/env")
+def debug_env(settings: Settings = Depends(get_settings)):
+    return {
+        "ENV": settings.ENV,
+        "HAS_PLAID_CLIENT_ID": bool(settings.PLAID_CLIENT_ID),
+        "HAS_PLAID_SECRET": bool(settings.PLAID_SECRET),
+        "env_file": settings.model_config.get("env_file"),
+    }
 
 #testing example endpoints with how they work in FastAPI
 @app.get("/health")

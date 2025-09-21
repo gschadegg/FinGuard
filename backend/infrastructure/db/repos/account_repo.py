@@ -1,6 +1,6 @@
 from typing import Iterable
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import select, delete
 from app.domain.entities import AccountEntity
 from infrastructure.db.models.account import Account
 from app.db_interfaces import AccountRepo

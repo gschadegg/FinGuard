@@ -1,4 +1,4 @@
-// // app/api/route.ts
+// export const runtime = 'nodejs' // required if you proxy to http://localhost:8000
 
 import { proxyJson } from '@/lib/proxy'
 

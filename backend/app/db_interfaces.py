@@ -1,6 +1,6 @@
-from typing import Protocol, Sequence, Optional
+from typing import Protocol, Sequence, Optional, Iterable
 from app.domain.entities import UserEntity
-
+from app.domain.entities import ConnectionItemEntity
 
 # DB Repositories Interfaces
 
@@ -12,3 +12,14 @@ class UserRepo(Protocol):
     async def list(self) -> Sequence[UserEntity]: ...
     async def add(self, user: UserEntity) -> UserEntity: ...
     async def delete(self, user_id: int) -> None: ...
+
+
+
+# Plaid Financial Accounts
+class AccountRepo(Protocol):
+    async def upsert_selected(self, item_id: int, selectedAccount: Iterable[dict]) -> None: ...
+
+
+class ConnectionItemRepo(Protocol):
+    async def get_by_connection_item_id(self, plaid_item_id: str) -> ConnectionItemEntity | None: ...
+    async def add(self, item: ConnectionItemEntity) -> ConnectionItemEntity: ... 

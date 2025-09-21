@@ -11,7 +11,7 @@ def _to_entity(row: User) -> UserEntity:
 
 # this is an example to figure out the structure and workflow I want to follow
 # create a class repository with all the capabilities app will need 
-class SqlAlchemyUserRepo(UserRepo):
+class SqlUserRepo(UserRepo):
     def __init__(self, session: AsyncSession):
         self.session = session
 

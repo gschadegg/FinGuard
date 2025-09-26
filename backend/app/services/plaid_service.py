@@ -76,7 +76,7 @@ class PlaidService:
                 language="en",
             )
             res = plaid_client.link_token_create(req).to_dict()
-            return {"link_token": res["link_token"], "mode": "create"}
+            return {"ok": True, "link_token": res["link_token"], "mode": "create"}
 
         except plaid.ApiException as e:
             status = getattr(e, "status", 500) or 500
@@ -85,6 +85,8 @@ class PlaidService:
             except Exception:
                 body = {"error": str(e)}
             raise HTTPException(status_code=status, detail=body)
+        except HTTPException as e:
+            raise
         except Exception as e:
             raise HTTPException(500, str(e))
 

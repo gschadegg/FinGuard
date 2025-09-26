@@ -4,7 +4,6 @@ source =
 
 # Don’t try to measure 3rd-party / env / generated code
 omit =
-    infrastrcture/*
     .venv/*
     tests/*
     **/__init__.py

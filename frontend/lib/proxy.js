@@ -1,5 +1,30 @@
 import { NextResponse } from 'next/server'
 
+const BLOCKED_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'host',
+  'content-length',
+  'accept-encoding',
+])
+
+function sanitizeHeaders(headers) {
+  const out = new Headers()
+  for (const [key, value] of headers.entries()) {
+    const k = key.toLowerCase()
+    if (BLOCKED_HEADERS.has(k)) continue
+    if (k.startsWith('sec-fetch-')) continue
+    out.set(key, value)
+  }
+  return out
+}
+
 export async function normalizeToJson(upstream) {
   const status = upstream.status
   const ct = upstream.headers.get('content-type') || ''
@@ -23,12 +48,21 @@ async function readBody(req) {
 }
 
 export async function proxyJson(req, targetUrl) {
-  const upstream = await fetch(targetUrl, {
-    method: req.method,
-    headers: req.headers,
-    body: await readBody(req),
-    cache: 'no-store',
-    redirect: 'manual',
-  })
-  return normalizeToJson(upstream)
+  try {
+    const upstream = await fetch(targetUrl, {
+      method: req.method,
+      headers: sanitizeHeaders(req.headers),
+      body: await readBody(req),
+      cache: 'no-store',
+      redirect: 'manual',
+    })
+    return normalizeToJson(upstream)
+  } catch (err) {
+    const name = err?.name || ''
+    const status = /timeout/i.test(name) ? 504 : 502 // timeout or bad gateway status
+    return NextResponse.json(
+      { ok: false, status, error: String(err?.message || err), code: err?.code ?? null },
+      { status }
+    )
+  }
 }

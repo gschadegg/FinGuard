@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
@@ -19,11 +19,16 @@ class AccountEntity(BaseModel):
     type: Optional[str] = None
     subtype: Optional[str] = None
     selected: bool = True
+    model_config = ConfigDict(from_attributes=True)
     
 class ConnectionItemEntity(BaseModel):
     id: Optional[int] = None
-    user_id: str
+    user_id: int
     plaid_item_id: str
     access_token_encrypted: str
     created_at: Optional[datetime] = None
     accounts: List[AccountEntity] = Field(default_factory=list)
+
+    institution_id: Optional[str] = None 
+    institution_name: Optional[str] = None 
+    model_config = ConfigDict(from_attributes=True)

@@ -1,18 +1,11 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
-import time
 
-from infrastructure.db.session import lifespan
-from app.api.v1.users import router as users_router
-from app.api.v1.plaid import router as plaid_router
+from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from app.config import get_settings, Settings
-
-from plaid.model.sandbox_public_token_create_request import SandboxPublicTokenCreateRequest
-from fastapi import APIRouter, Depends, HTTPException, status
-
+from app.api.v1.plaid import router as plaid_router
+from app.api.v1.users import router as users_router
+from infrastructure.db.session import lifespan
 
 app = FastAPI(lifespan=lifespan)
 

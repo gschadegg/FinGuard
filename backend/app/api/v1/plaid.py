@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from app.domain.errors import NotFoundError, ConflictError
-from app.domain.entities import AccountEntity
-from app.services_container import get_plaid_service
-from app.services.plaid_service import PlaidService
+from typing import List, Literal, Optional
 
-from typing import List, Optional, Literal
-from pydantic import BaseModel, Field, ConfigDict
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.services.plaid_service import PlaidService
+from app.services_container import get_plaid_service
 
 router = APIRouter(prefix="/plaid", tags=["plaid"])
 

@@ -1,6 +1,6 @@
-import os
 from cryptography.fernet import Fernet
-from app.config import Settings, get_settings
+
+from app.config import get_settings
 
 settings = get_settings()
 

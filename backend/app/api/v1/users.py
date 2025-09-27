@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.domain.entities import UserEntity
+from app.domain.errors import ConflictError, NotFoundError
 from app.services.user_service import UserService
 from app.services_container import get_user_service
-from app.domain.entities import UserEntity
-from app.domain.errors import NotFoundError, ConflictError
 
 router = APIRouter(prefix="/users", tags=["users"])
 

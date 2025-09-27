@@ -1,6 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from functools import lru_cache
 import os
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV = os.getenv("ENV", "dev")
 
@@ -18,10 +19,16 @@ class Settings(BaseSettings):
     PLAID_ENCRYPT_KEY: str
     # need to add each env variable expected if want to include and have access to it
 
-    model_config = SettingsConfigDict(env_file=_env_file_for(ENV), extra="ignore", env_file_encoding="utf-8", case_sensitive=False,)
+    model_config = SettingsConfigDict(
+        env_file=_env_file_for(ENV), 
+        extra="ignore", 
+        env_file_encoding="utf-8", 
+        case_sensitive=False,
+    )
 
 
-    # not sure if these will need to be different /same with the packages being used, might need to do research as things develop
+    # not sure if these will need to be different /same with the packages being used, 
+    # might need to do research as things develop
     @property
     def async_db_url(self) -> str:
         return self.DATABASE_URL

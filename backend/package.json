@@ -14,12 +14,17 @@
     "dev": ".\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "test": ".\\.venv\\Scripts\\python.exe -m pytest",
     "test:coverage": " .\\.venv\\Scripts\\python.exe -m pytest --cov=app --cov-report=term-missing",
-    "lint": ".\\.venv\\Scripts\\ruff.exe check .",
+    "lint": ".\\.venv\\Scripts\\ruff.exe check app",
+    "lint:fix": ".\\.venv\\Scripts\\ruff.exe check --fix app",
     "start:backend": "pnpm run db:up && pnpm run migrate:up && pnpm run dev",
     "postman:login": "pnpm exec dotenv -e .env -- cross-env-shell \"postman login --with-api-key $POSTMAN_KEY\"",
     "postman:run-collection": "pnpm exec dotenv -e .env -- cross-env-shell \"postman collection run postman/collections/FastAPI.postman_collection.json -e $POSTMAN_ENV_ID\"",
     "postman:test": "pnpm run postman-login && pnpm run postman-run-collection",
-    "init-setup": "pnpm run venv:create && pnpm run req:install && pnpm run db:up && pnpm run migrate:up && pnpm run seed && pnpm run dev"
+    "init-setup": "pnpm run venv:create && pnpm run req:install && pnpm run db:up && pnpm run migrate:up && pnpm run seed && pnpm run dev",
+    "qa:security": ".\\.venv\\Scripts\\bandit -r . -c bandit.yaml",
+    "qa:complexity": ".\\.venv\\Scripts\\radon cc -s -a app",
+    "qa:maintainability": ".\\.venv\\Scripts\\radon mi -s app",
+    "metrics:raw": ".\\.venv\\Scripts\\radon raw -s app -i 'tests,.venv,venv' -e '**/__init__.py'"
   },
   "devDependencies": {
     "cross-env": "^10.0.0",

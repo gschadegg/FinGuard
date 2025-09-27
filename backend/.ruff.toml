@@ -1,0 +1,16 @@
+target-version = "py313"
+line-length = 100
+
+select = ["E", "F", "I"]  
+ignore = []             
+
+# Don’t scan these
+extend-exclude = [
+  ".venv",
+  "tests",
+  "htmlcov",
+  "build",
+  "dist",
+  "**/__init__.py",
+  "node_modules"
+]

@@ -6,7 +6,7 @@ from app.domain.errors import NotFoundError, ConflictError
 
 # this is an example to figure out the structure and workflow I want to follow
 # need to mock the each db repo and pas to the service being tested to prevent tests hitting db
-class FakeUserRepo:
+class MockUserRepo:
     def __init__(self):
         self.rows: List[UserEntity] = []
         self._id = 0
@@ -34,7 +34,7 @@ class FakeUserRepo:
 
 @pytest.mark.anyio
 async def test_create_and_get_user():
-    svc = UserService(repo=FakeUserRepo())
+    svc = UserService(repo=MockUserRepo())
     created = await svc.create_user("a@b.com", "Alice")
     assert created.id == 1
     got = await svc.get_user(1)
@@ -42,7 +42,7 @@ async def test_create_and_get_user():
 
 @pytest.mark.anyio
 async def test_duplicate_email():
-    svc = UserService(repo=FakeUserRepo())
+    svc = UserService(repo=MockUserRepo())
     await svc.create_user("a@b.com", "Alice")
     with pytest.raises(ConflictError):
         await svc.create_user("a@b.com", "Again")

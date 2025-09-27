@@ -10,8 +10,12 @@ def _env_file_for(env: str) -> str:
 
 class Settings(BaseSettings):
     ENV: str = ENV
+    API_BASE_URL: str
     DATABASE_URL: str
     DATABASE_URL_SYNC: str | None = None
+    PLAID_CLIENT_ID: str
+    PLAID_SECRET: str
+    PLAID_ENCRYPT_KEY: str
     # need to add each env variable expected if want to include and have access to it
 
     model_config = SettingsConfigDict(env_file=_env_file_for(ENV), extra="ignore", env_file_encoding="utf-8", case_sensitive=False,)

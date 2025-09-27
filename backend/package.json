@@ -13,6 +13,7 @@
     "seed": "set ENV=dev&& .\\.venv\\Scripts\\python.exe -m seed.seed",
     "dev": ".\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "test": ".\\.venv\\Scripts\\python.exe -m pytest",
+    "test:coverage": " .\\.venv\\Scripts\\python.exe -m pytest --cov=app --cov-report=term-missing",
     "lint": ".\\.venv\\Scripts\\ruff.exe check .",
     "start:backend": "pnpm run db:up && pnpm run migrate:up && pnpm run dev",
     "postman:login": "pnpm exec dotenv -e .env -- cross-env-shell \"postman login --with-api-key $POSTMAN_KEY\"",

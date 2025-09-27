@@ -1,31 +1,68 @@
 import { NextResponse } from 'next/server'
 
-export async function normalizeToJson(upstream) {
-  const text = await upstream.text()
-  const ct = upstream.headers.get('content-type') || ''
+const BLOCKED_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'host',
+  'content-length',
+  'accept-encoding',
+])
 
-  if (!text) {
-    return NextResponse.json(
-      { ok: upstream.ok, status: upstream.status, body: null },
-      { status: upstream.status }
-    )
+function sanitizeHeaders(headers) {
+  const out = new Headers()
+  for (const [key, value] of headers.entries()) {
+    const k = key.toLowerCase()
+    if (BLOCKED_HEADERS.has(k)) continue
+    if (k.startsWith('sec-fetch-')) continue
+    out.set(key, value)
   }
-
-  if (ct.includes('application/json')) {
-    try {
-      return NextResponse.json(JSON.parse(text), { status: upstream.status })
-    } catch {
-      // need to handle or have it pass through to wrapper?
-    }
-  }
-
-  return NextResponse.json(
-    { ok: upstream.ok, status: upstream.status, body: text },
-    { status: upstream.status }
-  )
+  return out
 }
 
-export async function fetchAndNormalize(url, init = {}) {
-  const upstream = await fetch(url, { cache: 'no-store', ...init })
-  return normalizeToJson(upstream)
+export async function normalizeToJson(upstream) {
+  const status = upstream.status
+  const ct = upstream.headers.get('content-type') || ''
+  const text = await upstream.text()
+
+  if (!text) return NextResponse.json({ ok: upstream.ok, status, body: null }, { status })
+  if (ct.includes('application/json')) {
+    try {
+      return NextResponse.json(JSON.parse(text), { status })
+    } catch {}
+  }
+  return NextResponse.json({ ok: upstream.ok, status, body: text }, { status })
+}
+
+async function readBody(req) {
+  if (req.method === 'GET' || req.method === 'HEAD') return undefined
+  const ct = req.headers.get('content-type') || ''
+  if (ct.includes('application/json')) return JSON.stringify(await req.json())
+  if (ct.includes('application/x-www-form-urlencoded')) return await req.text()
+  return req.body
+}
+
+export async function proxyJson(req, targetUrl) {
+  try {
+    const upstream = await fetch(targetUrl, {
+      method: req.method,
+      headers: sanitizeHeaders(req.headers),
+      body: await readBody(req),
+      cache: 'no-store',
+      redirect: 'manual',
+    })
+    return normalizeToJson(upstream)
+  } catch (err) {
+    const name = err?.name || ''
+    const status = /timeout/i.test(name) ? 504 : 502 // timeout or bad gateway status
+    return NextResponse.json(
+      { ok: false, status, error: String(err?.message || err), code: err?.code ?? null },
+      { status }
+    )
+  }
 }

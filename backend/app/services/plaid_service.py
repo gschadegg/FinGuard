@@ -1,23 +1,21 @@
 
+import json
+from typing import Iterable, Literal, Optional
+
 import plaid
-from typing import Optional, Iterable, Literal
+from fastapi import HTTPException
+from plaid import ApiClient, Configuration
 from plaid.api import plaid_api
-from fastapi import HTTPException, status
-from plaid import Configuration, ApiClient
+from plaid.model.country_code import CountryCode
+from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.products import Products
-from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
-from plaid.model.country_code import CountryCode
-
-from app.db_interfaces import ConnectionItemRepo, AccountRepo
-
-from app.domain.entities import ConnectionItemEntity
-from app.security.crypto import encrypt, decrypt
 
 from app.config import get_settings
-import json
-
+from app.db_interfaces import AccountRepo, ConnectionItemRepo
+from app.domain.entities import ConnectionItemEntity
+from app.security.crypto import decrypt, encrypt
 
 settings = get_settings()
 
@@ -85,7 +83,7 @@ class PlaidService:
             except Exception:
                 body = {"error": str(e)}
             raise HTTPException(status_code=status, detail=body)
-        except HTTPException as e:
+        except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(500, str(e))
@@ -144,12 +142,17 @@ class PlaidService:
             item = await self.connection_item_repo.add(item)
         else:
 
-            item = await self.connection_item_repo.update(item, token_encrypted, institution_id, institution_name)
+            item = await self.connection_item_repo.update(item, token_encrypted, 
+                                                          institution_id, institution_name)
             mode = "updated"
         added_accounts = []
-        # save the user selected accounts to the db, these are the ones related to this connection link
+        # save the user selected accounts to the db, these are the ones 
+        # related to this connection link
         if selected_accounts:
-            added_accounts = await self.account_repo.upsert_selected(item_id=item.id, selected_accounts=selected_accounts, unselect_others=unselect_others)
+            added_accounts = await self.account_repo.upsert_selected(
+                item_id=item.id, 
+                selected_accounts=selected_accounts, 
+                unselect_others=unselect_others)
 
         return {
             "ok": True,

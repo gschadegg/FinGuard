@@ -1,7 +1,9 @@
 from typing import Sequence
-from app.domain.entities import UserEntity
-from app.domain.errors import NotFoundError, ConflictError
+
 from app.db_interfaces import UserRepo
+from app.domain.entities import UserEntity
+from app.domain.errors import ConflictError, NotFoundError
+
 
 class UserService:
     def __init__(self, repo: UserRepo):

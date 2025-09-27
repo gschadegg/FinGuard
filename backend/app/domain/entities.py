@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import List, Optional
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 # Domain Models for service layer use
 
 # User Class

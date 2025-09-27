@@ -1,12 +1,13 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from infrastructure.db.session import get_db 
-from infrastructure.db.repos.user_repo import SqlUserRepo
+
+from app.services.plaid_service import PlaidService
+from app.services.user_service import UserService
 from infrastructure.db.repos.account_repo import SqlAccountRepo
 from infrastructure.db.repos.connectionItem_repo import SqlConnectionItemRepo
+from infrastructure.db.repos.user_repo import SqlUserRepo
+from infrastructure.db.session import get_db
 
-from app.services.user_service import UserService
-from app.services.plaid_service import PlaidService
 
 # want to be able to get a service that is then connected to the appropriate db repo and db session
 async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:

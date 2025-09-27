@@ -18,7 +18,6 @@ To install dependencies running the following scripts:
 ##### Additional Scripts Available
 
 - Recreate requirements.txt file: `pnpm run req:freeze`
-- Linting: `pnpm run lint`
 
 #### Running
 
@@ -32,6 +31,16 @@ Run `pnpm run dev` and visit `http://localhost:8000/docs`
 
 - Unit & Module Tests `pnpm run test`
 - Postman Tests: `pnpm run postman:test`
+
+#### QA & Metrics
+
+- Linting: `pnpm run lint`
+- Auto-fix lint and formatting issues: `npm run lint:fix`
+
+- Security Scan: `npm run qa:security`
+- Complexity Report: `npm run qa:complexity`
+- Maintainability Report: `npm run qa:maintainability`
+- Raw Metics (LOC, LLOC, SLOC): `npm run metrics:raw`
 
 ## Tech Stack
 

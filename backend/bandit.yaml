@@ -1,0 +1,11 @@
+skips: []
+exclude_dirs:
+  - .venv
+  - tests
+  - htmlcov
+  - node_modules
+  - .git
+  - dist
+  - build
+severity: LOW
+confidence: LOW

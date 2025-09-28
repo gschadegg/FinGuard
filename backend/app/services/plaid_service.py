@@ -1,6 +1,6 @@
 
 import json
-from typing import Iterable, Literal, Optional
+from typing import Iterable, Literal, Optional, List, Dict
 
 import plaid
 from fastapi import HTTPException
@@ -16,6 +16,9 @@ from app.config import get_settings
 from app.db_interfaces import AccountRepo, ConnectionItemRepo
 from app.domain.entities import ConnectionItemEntity
 from app.security.crypto import decrypt, encrypt
+
+from plaid.model.accounts_get_request import AccountsGetRequest
+from plaid.model.accounts_get_request_options import AccountsGetRequestOptions
 
 settings = get_settings()
 
@@ -94,7 +97,7 @@ class PlaidService:
         public_token:str,
         user_id: int, 
         selected_accounts: Optional[Iterable[dict]] = None,
-        institution: Optional[Iterable[dict]] = None,
+        institution: Optional[dict] = None,
         unselect_others: bool = False,
         ):
         if not public_token:
@@ -152,7 +155,10 @@ class PlaidService:
             added_accounts = await self.account_repo.upsert_selected(
                 item_id=item.id, 
                 selected_accounts=selected_accounts, 
-                unselect_others=unselect_others)
+                unselect_others=unselect_others,
+                institution_id=institution_id,
+                institution_name=institution_name
+            )
 
         return {
             "ok": True,
@@ -162,3 +168,38 @@ class PlaidService:
             "added_accounts": added_accounts, 
             "institution": {"id": item.institution_id, "name": item.institution_name},
         }
+
+    async def get_accounts(
+        self,
+        *,
+        access_token: Optional[str] = None,
+        item_id: Optional[int] = None,
+        account_ids: Optional[List[str]] = None,
+    ) -> Dict[str, dict]:
+
+
+        if not access_token:
+            if item_id is None:
+                raise ValueError("Provide either Access Token or Connection ID")
+            item = await self.connection_item_repo.get_by_id(item_id) 
+            if not item:
+                return {}
+            access_token = decrypt(item.access_token_encrypted)
+
+        try:
+            if account_ids:
+                req = AccountsGetRequest(
+                    access_token=access_token,
+                    options=AccountsGetRequestOptions(account_ids=account_ids),
+                )
+            else:
+                req = AccountsGetRequest(access_token=access_token)
+
+            # fetching account specific data from plaid
+            res = plaid_client.accounts_get(req).to_dict()
+            accounts = res.get("accounts", [])
+
+
+            return {a["account_id"]: a for a in accounts}
+        except plaid.ApiException:
+            return {}

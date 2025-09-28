@@ -38,6 +38,15 @@ class SqlConnectionItemRepo(ConnectionItemRepo):
         item = result.scalar_one_or_none()
         return _to_entity(item) if item else None
 
+    # get by DB ID
+    async def get_by_id(self, id: str):
+        result = await self.session.execute(
+            select(ConnectionItem).where(ConnectionItem.id == id)
+        )
+        item = result.scalar_one_or_none()
+        return _to_entity(item) if item else None
+    
+
     async def add(self, item: ConnectionItemEntity) -> ConnectionItemEntity:
         row = ConnectionItem(id=item.id, 
                              user_id=item.user_id, 

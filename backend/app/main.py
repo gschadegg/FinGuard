@@ -5,12 +5,14 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1.plaid import router as plaid_router
 from app.api.v1.users import router as users_router
+from app.api.v1.accounts import router as accounts_router
 from infrastructure.db.session import lifespan
 
 app = FastAPI(lifespan=lifespan)
 
 # examples from doc notes
 app.include_router(users_router)
+app.include_router(accounts_router)
 app.include_router(plaid_router)
 
 

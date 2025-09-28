@@ -1,5 +1,5 @@
 import pytest
-from typing import List
+from typing import List, Optional
 from types import SimpleNamespace
 from unittest.mock import Mock, AsyncMock
 from app.services.plaid_service import PlaidService
@@ -14,19 +14,27 @@ class MockAccountRepo:
         self.return_value = [{"id": 1, "name": "Checking", "plaid_account_id": "account1"}]
         self.calls = []
     
-    async def upsert_selected(self, item_id, selected_accounts, unselect_others=False):
-        self.calls.append({"item_id": item_id, "count": len(list(selected_accounts)), "unselect_others": unselect_others})
+    async def upsert_selected(self, item_id, selected_accounts, institution_id, institution_name, unselect_others=False,):
+        self.calls.append({"item_id": item_id, "count": len(list(selected_accounts)), "unselect_others": unselect_others, institution_id: "bank ID", institution_name: "bank Name"})
         return self.return_value
+    
 
 class MockConnectionItemRepo:
     def __init__(self, existing=None):
         self.items_by_plaid_id: dict[str, ConnectionItemEntity] = {}
+        self.single_item: ConnectionItemEntity = None
+
+        self.get_by_id_calls = 0
         self.add_calls = 0
         self.update_calls = 0
         self.existing = existing
 
     async def get_by_connection_item_id(self, plaid_item_id: str):
         return self.items_by_plaid_id.get(plaid_item_id)
+    
+    async def get_by_id(self, id: int) -> Optional[ConnectionItemEntity]:
+        self.get_by_id_calls += 1
+        return self.single_item
     
     async def add(self, item: ConnectionItemEntity) -> ConnectionItemEntity:
         self.add_calls += 1
@@ -52,29 +60,46 @@ class MockConnectionItemRepo:
             accounts=[],
         )
 
+# mocking plaid models
+class MockAccountsGetRequestOptions:
+    def __init__(self, account_ids: Optional[List[str]] = None):
+        self.account_ids = account_ids
+
+class MockAccountsGetRequest:
+    def __init__(self, access_token: str, options: Optional[MockAccountsGetRequestOptions] = None):
+        self.access_token = access_token
+        self.options = options
+## 
+
+
 class ApiException(Exception):
     def __init__(self, status, body):
         self.status = status
         self.body = body
+
+
+@pytest.fixture
+def mock_plaid_models(monkeypatch):
+    monkeypatch.setattr("app.services.plaid_service.AccountsGetRequest", MockAccountsGetRequest, raising=False)
+    monkeypatch.setattr("app.services.plaid_service.AccountsGetRequestOptions", MockAccountsGetRequestOptions, raising=False)
+
+def _plaid_resp(accounts: List[dict]) -> SimpleNamespace:
+    return SimpleNamespace(to_dict=lambda: {"accounts": accounts})
 
 @pytest.fixture
 def mock_plaid_client(monkeypatch):
     client = SimpleNamespace(
         link_token_create=Mock(name="link_token_create"),
         item_public_token_exchange=Mock(name="item_public_token_exchange"),
+        accounts_get=Mock(name="accounts_get"),
     )
-
-    # class ApiException(Exception):
-    #     def __init__(self, status, body):
-    #         super().__init__(f"{status}: {body}")
-    #         self.status = status
-    #         self.body = body
 
     monkeypatch.setattr("app.services.plaid_service.plaid_client", client)
     monkeypatch.setattr("app.services.plaid_service.encrypt", lambda s: "encrypt-access-token")
     monkeypatch.setattr("app.services.plaid_service.decrypt", lambda s: "decrypted-access-token")
     monkeypatch.setattr("app.services.plaid_service.plaid", SimpleNamespace(ApiException=ApiException))
     return client
+
 
 ############################
 # create_link_token Tests
@@ -351,3 +376,106 @@ async def test_exchange_public_token_plaid_400_used_token(mock_plaid_client, mon
         await svc.exchange_public_token(public_token="used", user_id=1)
     assert ei.value.status_code == 400
     assert mock_plaid_client.item_public_token_exchange.call_count == 1
+
+
+
+############################
+# get_accounts Tests
+############################
+
+
+# TC-PLAID-ACCTS-001: BASE scenario, accounts details returned
+@pytest.mark.anyio
+async def test_get_accounts_base(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+    mock_plaid_client.accounts_get.return_value = _plaid_resp([
+        {"account_id": "account1", "name": "Checking"},
+        {"account_id": "account2", "name": "Savings"},
+    ])
+
+    out = await svc.get_accounts(access_token="token-123")
+    assert set(out.keys()) == {"account1", "account2"}
+    assert mock_plaid_client.accounts_get.call_count == 1
+
+    (req,), _ = mock_plaid_client.accounts_get.call_args
+
+    assert isinstance(req, MockAccountsGetRequest)
+    assert req.access_token == "token-123"
+    assert req.options is None
+
+
+# TC-PLAID-ACCTS-002: Filtered for only requested accounts
+@pytest.mark.anyio
+async def test_get_accounts_filtered(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+    mock_plaid_client.accounts_get.return_value = _plaid_resp([
+        {"account_id": "account2", "name": "Savings"},
+    ])
+
+    out = await svc.get_accounts(access_token="token-123", account_ids=["account2"])
+    assert set(out.keys()) == {"account2"}
+
+    (req,), _ = mock_plaid_client.accounts_get.call_args
+    assert isinstance(req.options, MockAccountsGetRequestOptions)
+    assert req.options.account_ids == ["account2"]
+
+
+# TC-PLAID-ACCTS-003: Get account access token from item_id
+@pytest.mark.anyio
+async def test_get_accounts_by_item_id(mock_plaid_client, mock_plaid_models):
+    repo = MockConnectionItemRepo()
+    repo.single_item = ConnectionItemEntity(
+        id=42, user_id=1, plaid_item_id="item-abc",
+        access_token_encrypted="ENCRYPTED-XYZ",
+        institution_id="ins_3", institution_name="Chase", accounts=[]
+    )
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=repo)
+
+    mock_plaid_client.accounts_get.return_value = _plaid_resp([
+        {"account_id": "account1", "name": "Checking"},
+    ])
+
+    out = await svc.get_accounts(item_id=42, account_ids=["account1"])
+    assert set(out.keys()) == {"account1"}
+
+    (req,), _ = mock_plaid_client.accounts_get.call_args
+
+    assert req.access_token == "decrypted-access-token"
+    assert isinstance(req.options, MockAccountsGetRequestOptions)
+    assert req.options.account_ids == ["account1"]
+
+
+# TC-PLAID-ACCTS-004: Both access token and item_id params missing, throws exception
+@pytest.mark.anyio
+async def test_get_accounts_missing_params(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+    with pytest.raises(ValueError) as ei:
+        await svc.get_accounts()
+    assert "Provide either Access Token or Connection ID" in str(ei.value)
+
+
+# TC-PLAID-ACCTS-005: item_id not found, returns {}
+@pytest.mark.anyio
+async def test_get_accounts_not_found(mock_plaid_client, mock_plaid_models):
+    repo = MockConnectionItemRepo()
+    repo.single_item = None
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=repo)
+
+    out = await svc.get_accounts(item_id=999)
+    assert out == {}
+    assert mock_plaid_client.accounts_get.call_count == 0  # no plaid call
+
+
+# TC-PLAID-ACCTS-006: Plaid throws exception, returns {}
+@pytest.mark.anyio
+async def test_get_accounts_plaid_error(mock_plaid_client, mock_plaid_models, monkeypatch):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+    def boom(_req):
+        raise ApiException(status=400, body="bad")
+    mock_plaid_client.accounts_get.side_effect = boom
+
+    out = await svc.get_accounts(access_token="token-123", account_ids=["account1"])
+    assert out == {}

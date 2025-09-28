@@ -11,7 +11,7 @@ institution_helper = lambda _id, _name: SimpleNamespace(id=_id, name=_name)
 class MockAccountRepo:
     def __init__(self):
         self.rows: List[UserEntity] = []
-        self.return_value = [{"id": 1, "name": "Checking", "plaid_account_id": "account1"}]
+        self.return_value = [{"id": 1, "name": "Checking", "plaid_account_id": "account_1"}]
         self.calls = []
     
     async def upsert_selected(self, item_id, selected_accounts, institution_id, institution_name, unselect_others=False,):
@@ -69,6 +69,10 @@ class MockAccountsGetRequest:
     def __init__(self, access_token: str, options: Optional[MockAccountsGetRequestOptions] = None):
         self.access_token = access_token
         self.options = options
+
+class MockTransactionsSyncRequest:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
 ## 
 
 
@@ -77,11 +81,23 @@ class ApiException(Exception):
         self.status = status
         self.body = body
 
+def _transaction_sync_resp(added=None, modified=None, removed=None, next_cursor=None, has_more=False):
+    return SimpleNamespace(
+        to_dict=lambda: {
+            "added": added or [],
+            "modified": modified or [],
+            "removed": removed or [],
+            "next_cursor": next_cursor,
+            "has_more": has_more,
+        }
+    )
+
 
 @pytest.fixture
 def mock_plaid_models(monkeypatch):
     monkeypatch.setattr("app.services.plaid_service.AccountsGetRequest", MockAccountsGetRequest, raising=False)
     monkeypatch.setattr("app.services.plaid_service.AccountsGetRequestOptions", MockAccountsGetRequestOptions, raising=False)
+    monkeypatch.setattr("app.services.plaid_service.TransactionsSyncRequest", MockTransactionsSyncRequest, raising=False)
 
 def _plaid_resp(accounts: List[dict]) -> SimpleNamespace:
     return SimpleNamespace(to_dict=lambda: {"accounts": accounts})
@@ -92,6 +108,7 @@ def mock_plaid_client(monkeypatch):
         link_token_create=Mock(name="link_token_create"),
         item_public_token_exchange=Mock(name="item_public_token_exchange"),
         accounts_get=Mock(name="accounts_get"),
+        transactions_sync=Mock(name="transactions_sync")
     )
 
     monkeypatch.setattr("app.services.plaid_service.plaid_client", client)
@@ -99,6 +116,8 @@ def mock_plaid_client(monkeypatch):
     monkeypatch.setattr("app.services.plaid_service.decrypt", lambda s: "decrypted-access-token")
     monkeypatch.setattr("app.services.plaid_service.plaid", SimpleNamespace(ApiException=ApiException))
     return client
+
+
 
 
 ############################
@@ -189,7 +208,7 @@ async def test_exchange_public_token_base(mock_plaid_client):
     result = await svc.exchange_public_token(
         public_token="public-token",
         user_id=7,
-        selected_accounts=[{"id": "account1", "name": "Checking"}],
+        selected_accounts=[{"id": "account_1", "name": "Checking"}],
         institution=institution_helper("institution1", "Chase"),
         unselect_others=True,
     )
@@ -264,7 +283,7 @@ async def test_exchange_public_token_update_existing(mock_plaid_client):
     result = await svc.exchange_public_token(
         public_token="public_token",
         user_id=1,
-        selected_accounts=[{"id": "account1"}],
+        selected_accounts=[{"id": "account_1"}],
         institution=institution_helper("institution2", "Another Bank"),
         unselect_others=False,
     )
@@ -336,7 +355,7 @@ async def test_exchange_public_token_update_fails(mock_plaid_client):
     svc = PlaidService(account_repo, connectionItem_repo)
 
     with pytest.raises(RuntimeError):
-        await svc.exchange_public_token(public_token="public_token", user_id=1, selected_accounts=[{"id": "account1"}])
+        await svc.exchange_public_token(public_token="public_token", user_id=1, selected_accounts=[{"id": "account_1"}])
     assert len(account_repo.calls) == 0 
 
 
@@ -390,12 +409,12 @@ async def test_get_accounts_base(mock_plaid_client, mock_plaid_models):
     svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
 
     mock_plaid_client.accounts_get.return_value = _plaid_resp([
-        {"account_id": "account1", "name": "Checking"},
-        {"account_id": "account2", "name": "Savings"},
+        {"account_id": "account_1", "name": "Checking"},
+        {"account_id": "account_2", "name": "Savings"},
     ])
 
     out = await svc.get_accounts(access_token="token-123")
-    assert set(out.keys()) == {"account1", "account2"}
+    assert set(out.keys()) == {"account_1", "account_2"}
     assert mock_plaid_client.accounts_get.call_count == 1
 
     (req,), _ = mock_plaid_client.accounts_get.call_args
@@ -411,15 +430,15 @@ async def test_get_accounts_filtered(mock_plaid_client, mock_plaid_models):
     svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
 
     mock_plaid_client.accounts_get.return_value = _plaid_resp([
-        {"account_id": "account2", "name": "Savings"},
+        {"account_id": "account_2", "name": "Savings"},
     ])
 
-    out = await svc.get_accounts(access_token="token-123", account_ids=["account2"])
-    assert set(out.keys()) == {"account2"}
+    out = await svc.get_accounts(access_token="token-123", account_ids=["account_2"])
+    assert set(out.keys()) == {"account_2"}
 
     (req,), _ = mock_plaid_client.accounts_get.call_args
     assert isinstance(req.options, MockAccountsGetRequestOptions)
-    assert req.options.account_ids == ["account2"]
+    assert req.options.account_ids == ["account_2"]
 
 
 # TC-PLAID-ACCTS-003: Get account access token from item_id
@@ -434,17 +453,17 @@ async def test_get_accounts_by_item_id(mock_plaid_client, mock_plaid_models):
     svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=repo)
 
     mock_plaid_client.accounts_get.return_value = _plaid_resp([
-        {"account_id": "account1", "name": "Checking"},
+        {"account_id": "account_1", "name": "Checking"},
     ])
 
-    out = await svc.get_accounts(item_id=42, account_ids=["account1"])
-    assert set(out.keys()) == {"account1"}
+    out = await svc.get_accounts(item_id=42, account_ids=["account_1"])
+    assert set(out.keys()) == {"account_1"}
 
     (req,), _ = mock_plaid_client.accounts_get.call_args
 
     assert req.access_token == "decrypted-access-token"
     assert isinstance(req.options, MockAccountsGetRequestOptions)
-    assert req.options.account_ids == ["account1"]
+    assert req.options.account_ids == ["account_1"]
 
 
 # TC-PLAID-ACCTS-004: Both access token and item_id params missing, throws exception
@@ -473,9 +492,111 @@ async def test_get_accounts_not_found(mock_plaid_client, mock_plaid_models):
 async def test_get_accounts_plaid_error(mock_plaid_client, mock_plaid_models, monkeypatch):
     svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
 
-    def boom(_req):
+    def error_thrown(_req):
         raise ApiException(status=400, body="bad")
-    mock_plaid_client.accounts_get.side_effect = boom
+    mock_plaid_client.accounts_get.side_effect = error_thrown
 
-    out = await svc.get_accounts(access_token="token-123", account_ids=["account1"])
+    out = await svc.get_accounts(access_token="token-123", account_ids=["account_1"])
     assert out == {}
+
+
+
+############################
+# transactions_sync Tests
+############################
+
+# TC-PLAID-SYNC-001: BASE scenario and initial sync
+@pytest.mark.anyio
+async def test_transactions_sync_base_no_cursor(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+    mock_plaid_client.transactions_sync.return_value = _transaction_sync_resp(
+        added=[{"transaction_id": "transaction_1"}],
+        modified=[],
+        removed=[],
+        next_cursor="cursor-1",
+        has_more=False,
+    )
+
+    out = await svc.transactions_sync(access_token="access_token", cursor=None)
+
+    assert out == {
+        "added": [{"transaction_id": "transaction_1"}],
+        "modified": [],
+        "removed": [],
+        "next_cursor": "cursor-1",
+        "has_more": False,
+    }
+
+    assert mock_plaid_client.transactions_sync.call_count == 1
+
+
+    req = mock_plaid_client.transactions_sync.call_args[0][0]
+    assert req.kwargs["access_token"] == "access_token"
+    assert req.kwargs["count"] == 500
+    
+    assert "cursor" not in req.kwargs
+
+
+# TC-PLAID-SYNC-002: Cursor exists, updates cursor on next sync
+@pytest.mark.anyio
+async def test_transactions_sync_with_cursor(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+    mock_plaid_client.transactions_sync.return_value = _transaction_sync_resp(
+        added=[],
+        modified=[{"transaction_id": "transaction_2"}],
+        removed=[],
+        next_cursor="cursor-2",
+        has_more=True,
+    )
+
+    out = await svc.transactions_sync(access_token="access_token", cursor="cursor-0")
+
+    assert out["modified"] == [{"transaction_id": "transaction_2"}]
+    assert out["next_cursor"] == "cursor-2"
+    assert out["has_more"] is True
+
+    req = mock_plaid_client.transactions_sync.call_args[0][0]
+    assert req.kwargs["access_token"] == "access_token"
+    assert req.kwargs["cursor"] == "cursor-0" 
+    assert req.kwargs["count"] == 500
+
+
+# TC-PLAID-SYNC-003: Plaid throws exception
+@pytest.mark.anyio
+async def test_transactions_sync_plaid_exception(mock_plaid_client, mock_plaid_models):
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+
+
+    mock_plaid_client.transactions_sync.side_effect = ApiException(500, "error thrown")
+
+    out = await svc.transactions_sync(access_token="access_token", cursor="cursor-1")
+
+    assert out == {
+        "added": [],
+        "modified": [],
+        "removed": [],
+        "next_cursor": "cursor-1",
+        "has_more": False,
+    }
+
+
+# TC-PLAID-SYNC-004: Check for missing TransactionSyncRequest Model
+@pytest.mark.anyio
+async def test_transactions_sync_model_missing(monkeypatch, mock_plaid_client):
+
+    monkeypatch.setattr("app.services.plaid_service.TransactionsSyncRequest", None, raising=False)
+
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=MockConnectionItemRepo())
+    out = await svc.transactions_sync(access_token="access_token", cursor="cursor-2")
+
+
+    assert mock_plaid_client.transactions_sync.call_count == 0
+    assert out == {
+        "added": [],
+        "modified": [],
+        "removed": [],
+        "next_cursor": "cursor-2",
+        "has_more": False,
+    }

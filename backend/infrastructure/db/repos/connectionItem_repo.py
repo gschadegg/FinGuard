@@ -1,5 +1,5 @@
 from typing import Iterable, Union, Optional
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 from app.domain.entities import ConnectionItemEntity, AccountEntity
 from infrastructure.db.models.connectionItem import ConnectionItem
 from infrastructure.db.models.account import Account
@@ -37,6 +37,15 @@ class SqlConnectionItemRepo(ConnectionItemRepo):
         )
         item = result.scalar_one_or_none()
         return _to_entity(item) if item else None
+
+    # get by DB ID
+    async def get_by_id(self, id: str):
+        result = await self.session.execute(
+            select(ConnectionItem).where(ConnectionItem.id == id)
+        )
+        item = result.scalar_one_or_none()
+        return _to_entity(item) if item else None
+    
 
     async def add(self, item: ConnectionItemEntity) -> ConnectionItemEntity:
         row = ConnectionItem(id=item.id, 
@@ -94,3 +103,20 @@ class SqlConnectionItemRepo(ConnectionItemRepo):
         await self.session.commit()
 
         return ConnectionItemEntity.model_validate(row, from_attributes=True)
+    
+    #returns list of connection db ids
+    async def list_ids_by_user(self, user_id: int) -> list[int]:
+        rows = await self.session.execute(
+            select(ConnectionItem.id).where(ConnectionItem.user_id == user_id)
+        )
+        return list(rows.scalars().all()) 
+
+
+    async def update_transactions_cursor(self, item_id: int, cursor: str | None) -> None:
+        await self.session.execute(
+            update(ConnectionItem)
+            .where(ConnectionItem.id == item_id)
+            .values(transactions_cursor=cursor)
+        )
+        await self.session.flush()
+        await self.session.commit()

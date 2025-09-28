@@ -3,16 +3,38 @@ import Image from 'next/image'
 import { ModeToggle } from '@/components/mode-toggle/ModeToggle'
 import Link from 'next/link'
 import { useState } from 'react'
+import { GET_ACCOUNT_BY_ID, GET_ALL_ACCOUNTS } from '@/lib/API_URLS/PROXY'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
   const [dataResult, setData] = useState(null)
-
+  const [accounts, setAccounts] = useState(null)
   const pingApiTest = async () => {
     const r = await fetch('/api', { cache: 'no-store' })
     const json = await r.json()
     setData(json)
   }
 
+  const getAccountsTest = async () => {
+    const params = {
+      user_id: 1,
+    }
+    const queryParams = new URLSearchParams(params)
+    const r = await fetch(`${GET_ALL_ACCOUNTS}?${queryParams.toString()}`, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const json = await r.json()
+    setAccounts(json)
+  }
+  // const r = await fetch(CREATE_PLAID_TOKEN_URL, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify(body),
+  //     })
+  //     const data = await r.json()
+  //     setLinkToken(data.link_token)
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -32,6 +54,8 @@ export default function Home() {
         <button onClick={pingApiTest}>Hit REST via Next proxy</button>
         <pre>{dataResult ? JSON.stringify(dataResult, null, 2) : 'No result yet'}</pre>
 
+        <Button onClick={getAccountsTest}>Get Users Accounts</Button>
+        <pre>{accounts ? JSON.stringify(accounts, null, 2) : 'No result yet'}</pre>
         <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{' '}

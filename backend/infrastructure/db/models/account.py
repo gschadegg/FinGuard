@@ -24,6 +24,8 @@ class Account(Base):
     type: Mapped[str | None] = mapped_column(String(50), nullable=True) # account types like depository/credit/loan
     subtype: Mapped[str | None] = mapped_column(String(50), nullable=True) # account types like checking/savings
     selected: Mapped[bool] = mapped_column(Boolean, default=True) # if there is a connection item for it/selected by user
-
+    
+    institution_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    institution_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     item: Mapped["ConnectionItem"] = relationship(back_populates="accounts")

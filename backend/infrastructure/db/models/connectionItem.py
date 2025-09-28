@@ -21,7 +21,8 @@ class ConnectionItem(Base):
 
     plaid_item_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     access_token_encrypted: Mapped[str] = mapped_column(String(1024))
-
+    transactions_cursor = mapped_column(String(256), nullable=True, index=True)
+    
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda:datetime.now(timezone.utc)
     )

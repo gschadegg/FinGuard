@@ -1,11 +1,10 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
-from app.domain.entities import AccountEntity, FullAccountEntity
-from app.services_container import get_account_service
-from app.services.account_service import AccountService
 
+from app.domain.entities import FullAccountEntity
+from app.services.account_service import AccountService
+from app.services_container import get_account_service
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 

@@ -1,24 +1,24 @@
 
 import json
-from typing import Iterable, Literal, Optional, List, Dict
+from typing import Dict, Iterable, List, Literal, Optional
 
 import plaid
 from fastapi import HTTPException
 from plaid import ApiClient, Configuration
 from plaid.api import plaid_api
+from plaid.model.accounts_get_request import AccountsGetRequest
+from plaid.model.accounts_get_request_options import AccountsGetRequestOptions
 from plaid.model.country_code import CountryCode
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.products import Products
+from plaid.model.transactions_sync_request import TransactionsSyncRequest
 
 from app.config import get_settings
 from app.db_interfaces import AccountRepo, ConnectionItemRepo
 from app.domain.entities import ConnectionItemEntity
 from app.security.crypto import decrypt, encrypt
-
-from plaid.model.accounts_get_request import AccountsGetRequest
-from plaid.model.accounts_get_request_options import AccountsGetRequestOptions
 
 settings = get_settings()
 
@@ -203,3 +203,28 @@ class PlaidService:
             return {a["account_id"]: a for a in accounts}
         except plaid.ApiException:
             return {}
+
+  
+    async def transactions_sync(self, access_token: str, cursor: str | None) -> dict:
+        if TransactionsSyncRequest is None: # weird thing with plaid, just in case
+            return {"added": [], "modified": [], "removed": [], 
+                    "next_cursor": cursor, "has_more": False}
+        
+        req_args = {"access_token": access_token, "count": 500}
+        if cursor is not None:
+            req_args["cursor"] = cursor
+
+        req = TransactionsSyncRequest(**req_args)
+        try:
+            res = plaid_client.transactions_sync(req).to_dict()
+            return {
+                "added": res.get("added", []),
+                "modified": res.get("modified", []),
+                "removed": res.get("removed", []),
+                "next_cursor": res.get("next_cursor"),
+                "has_more": res.get("has_more", False),
+            }
+        except plaid.ApiException:
+            return {"added": [], "modified": [], "removed": [], 
+                    "next_cursor": cursor, "has_more": False}
+        

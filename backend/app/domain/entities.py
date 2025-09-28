@@ -69,4 +69,45 @@ class ConnectionItemEntity(BaseModel):
 
     institution_id: Optional[str] = None 
     institution_name: Optional[str] = None 
+
+    transactions_cursor: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+
+class TransactionEntity(BaseModel):
+    id: int
+    account_id: int
+    item_id: int
+    user_id: int
+
+    plaid_transaction_id: str
+    pending_transaction_id: str | None = None
+
+    name: str | None = None
+    merchant_name: str | None = None
+    amount: float
+    iso_currency_code: str | None = None
+    date: datetime
+    authorized_date: datetime | None = None
+    pending: bool
+    category: str | None = None
+    category_id: str | None = None
+    payment_channel: str | None = None
+
+    user_category: str | None = None
+    notes: str | None = None
+
+
+    fraud_score: float | None = None
+    is_fraud_suspected: bool = False
+
+    removed: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionsPageEntity(BaseModel):
+    items: list[TransactionEntity]
+    next_cursor: str | None = None
+    has_more: bool = False

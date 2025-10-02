@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (lint & test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Clear cache
+        working-directory: frontend
+        run: pnpm exec jest --clearCache
+
+      - name: Unit Test
+        run: pnpm run test
+
+  backend:
+    name: Backend (lint & test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTMAN_ENV_ID: ${{ secrets.POSTMAN_ENV_ID }}
+      POSTMAN_KEY: ${{ secrets.POSTMAN_KEY }}
+      PLAID_SECRET: ${{ secrets.PLAID_SECRET }}
+      PLAID_CLIENT_ID: ${{ secrets.PLAID_CLIENT_ID }}
+      PLAID_ENCRYPT_KEY: ${{ secrets.PLAID_ENCRYPT_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/.ruff.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov ruff
+
+      - name: Lint
+        run: python -m ruff check app
+
+      - name: Unit Test
+        run: python -m pytest
+
+  e2e:
+    name: Playwright E2E Tests
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTMAN_ENV_ID: ${{ secrets.POSTMAN_ENV_ID }}
+      POSTMAN_KEY: ${{ secrets.POSTMAN_KEY }}
+      PLAID_SECRET: ${{ secrets.PLAID_SECRET }}
+      PLAID_CLIENT_ID: ${{ secrets.PLAID_CLIENT_ID }}
+      PLAID_ENCRYPT_KEY: ${{ secrets.PLAID_ENCRYPT_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Write database/.env.postgres for CI
+        run: |
+          PGUSER="${{ secrets.POSTGRES_USER }}"
+          PGDB="${{ secrets.POSTGRES_DB }}"
+          [ -z "$PGUSER" ] && PGUSER=postgres
+          [ -z "$PGDB" ] && PGDB=app_test
+          mkdir -p database
+          cat > database/.env.postgres <<EOF
+          POSTGRES_USER=$PGUSER
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=$PGDB
+          EOF
+
+      - name: Start DB
+        working-directory: backend
+        run: pnpm run db:up
+
+      - name: Wait for DB
+        shell: bash
+        run: |
+          for i in {1..60}; do
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "DB up"; exit 0; fi
+            sleep 1
+          done
+          echo "Timed out waiting for DB"; exit 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend deps
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install alembic uvicorn
+
+      - name: Run DB migrations
+        working-directory: backend
+        env:
+          ENV: dev
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: alembic upgrade head
+
+      - name: Start API
+        working-directory: backend
+        run: |
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:8000/health || curl -fsS http://127.0.0.1:8000/docs; then
+              echo "API up"; break; fi; sleep 1; done
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Install Playwright
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: frontend
+        run: pnpm run e2e
+
+      - name: Cleanup DB
+        if: always()
+        working-directory: backend
+        run: pnpm run db:down || docker compose down -v || true

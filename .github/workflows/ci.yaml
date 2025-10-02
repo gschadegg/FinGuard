@@ -37,6 +37,10 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Clear cache
+        working-directory: frontend
+        run: pnpm exec jest --clearCache
+
       - name: Unit Test
         run: pnpm run test
 

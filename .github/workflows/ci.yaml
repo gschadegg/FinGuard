@@ -85,7 +85,6 @@ jobs:
 
   e2e:
     name: Playwright E2E Tests
-    # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [frontend, backend]
     runs-on: ubuntu-latest
     env:
@@ -103,9 +102,6 @@ jobs:
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -132,15 +128,14 @@ jobs:
         run: pnpm run db:up
 
       - name: Wait for DB
+        shell: bash
         run: |
           for i in {1..60}; do
-            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && echo "DB up" && break
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "DB up"; exit 0; fi
             sleep 1
           done
-
-      - name: Migrate DB
-        working-directory: backend
-        run: pnpm run migrate:up
+          echo "Timed out waiting for DB"; exit 1
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -149,12 +144,19 @@ jobs:
           cache: "pip"
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install backend deps
+      - name: Install backend deps (incl. alembic)
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install uvicorn
+          pip install alembic uvicorn
+
+      - name: Run DB migrations
+        working-directory: backend
+        env:
+          ENV: dev
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: alembic upgrade head
 
       - name: Start API
         working-directory: backend

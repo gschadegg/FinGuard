@@ -6,6 +6,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 
 import PageLayout from '../components/layouts/page-layout'
 import './globals.css'
+import { NotificationProvider } from '../components/notification/NotificationProvider'
+import NotificationStack from '../components/notification'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,7 +40,11 @@ export default async function RootLayout({ children }) {
             <AppSidebar />
 
             <SidebarTrigger className="p-3 ml-2 mt-6.5" />
-            <PageLayout pageTitle="All Transactions">{children}</PageLayout>
+
+            <NotificationProvider>
+              <PageLayout pageTitle="All Transactions">{children}</PageLayout>
+              <NotificationStack />
+            </NotificationProvider>
             {/* <main>{children}</main> */}
           </SidebarProvider>
         </ThemeProvider>

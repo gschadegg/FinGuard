@@ -45,10 +45,10 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/" className="group inline-flex items-center gap-2">
+                  <Link href="/" className="group inline-flex items-center gap-2">
                     <ChartArea className="size-5" />
                     <span>Dashboard</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -72,7 +72,7 @@ export function AppSidebar() {
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="/transactions">All Transactions</a>
+                          <Link href="/transactions">All Transactions</Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
 
@@ -80,12 +80,12 @@ export function AppSidebar() {
 
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Account 1</a>
+                          <Link href="#">Account 1</Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <a href="#">Account 2</a>
+                          <Link href="#">Account 2</Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
@@ -101,10 +101,10 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/budget" className="group inline-flex items-center gap-2 mb-8">
+                  <Link href="/budget" className="group inline-flex items-center gap-2 mb-8">
                     <BookOpen className="size-4" />
                     <span>Budget</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuSubItem>
@@ -132,12 +132,12 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="#" className="group inline-flex items-center gap-2">
+              <Link href="#" className="group inline-flex items-center gap-2">
                 <UserCircle className="size-5" />
                 <span className="truncate">
                   Signed in as <strong>User</strong>
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

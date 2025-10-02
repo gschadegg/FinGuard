@@ -5,7 +5,7 @@ const PageLayout = ({ children, pageTitle }) => {
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">{pageTitle ?? ''}</h1>
-          <div className="flex items-center gap-2" />
+          <div className="flex items-center gap-2"></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">

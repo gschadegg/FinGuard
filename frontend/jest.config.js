@@ -37,8 +37,6 @@ const config = {
     '<rootDir>/components/ui/',
     '<rootDir>/e2e_tests/',
     '<rootDir>/node_modules',
-    '<rootDir>/playwright-report',
-    '<rootDir>/test-results',
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -82,7 +80,9 @@ const config = {
   // maxWorkers: "50%",
 
   // An array of directory names to be searched recursively up from the requiring module's location
-  // moduleDirectories: ['node_modules', '<rootDir>'],
+  // moduleDirectories: [
+  //   "node_modules"
+  // ],
 
   // An array of file extensions your modules use
   // moduleFileExtensions: [
@@ -99,11 +99,7 @@ const config = {
   // ],
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
-  // moduleNameMapper: {
-  //   '^@/(.*)$': '<rootDir>/$1',
-  //   '^@/lib/API_URLS$': '<rootDir>/lib/API_URLS/index.js',
-  //   '^@/lib/API_URLS/index\\.js$': '<rootDir>/lib/API_URLS/index.js',
-  // },
+  // moduleNameMapper: {},
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
   // modulePathIgnorePatterns: [],

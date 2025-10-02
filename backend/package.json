@@ -19,7 +19,7 @@
     "start:backend": "pnpm run db:up && pnpm run migrate:up && pnpm run dev",
     "postman:login": "pnpm exec dotenv -e .env -- cross-env-shell \"postman login --with-api-key $POSTMAN_KEY\"",
     "postman:run-collection": "pnpm exec dotenv -e .env -- cross-env-shell \"postman collection run postman/collections/FastAPI.postman_collection.json -e $POSTMAN_ENV_ID\"",
-    "postman:test": "pnpm run postman:login && pnpm run postman:run-collection",
+    "postman:test": "pnpm run postman-login && pnpm run postman-run-collection",
     "init-setup": "pnpm run venv:create && pnpm run req:install && pnpm run db:up && pnpm run migrate:up && pnpm run seed && pnpm run dev",
     "qa:security": ".\\.venv\\Scripts\\bandit -r . -c bandit.yaml",
     "qa:complexity": ".\\.venv\\Scripts\\radon cc -s -a app",

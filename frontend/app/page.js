@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { ModeToggle } from '@/components/mode-toggle/ModeToggle'
 import Link from 'next/link'
 import { useState } from 'react'
-import { GET_ALL_ACCOUNTS } from '@/lib/api_urls'
+import { GET_ACCOUNT_BY_ID, GET_ALL_ACCOUNTS } from '@/lib/API_URLS/PROXY'
 import { Button } from '@/components/ui/button'
 
 export default function Home() {

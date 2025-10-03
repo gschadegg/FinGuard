@@ -1,7 +1,8 @@
 name: CI
 
 on:
-  push:
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -85,7 +86,6 @@ jobs:
 
   e2e:
     name: Playwright E2E Tests
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [frontend, backend]
     runs-on: ubuntu-latest
     env:

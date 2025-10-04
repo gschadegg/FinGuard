@@ -39,6 +39,7 @@ const config = {
     '<rootDir>/node_modules',
     '<rootDir>/playwright-report',
     '<rootDir>/test-results',
+    '<rootDir>/__tests__/utils',
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -178,6 +179,7 @@ const config = {
     '<rootDir>/dist/',
     '<rootDir>/build/',
     '<rootDir>/components/ui/', //these are ShadCN components and don't need to be tested
+    '<rootDir>/__tests__/utils',
   ],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files

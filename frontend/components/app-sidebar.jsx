@@ -72,7 +72,7 @@ export function AppSidebar() {
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
                         <SidebarMenuButton asChild>
-                          <Link href="/transactions">All Transactions</Link>
+                          <Link href="/accounts">All Accounts</Link>
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
 

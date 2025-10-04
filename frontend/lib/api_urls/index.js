@@ -14,6 +14,8 @@ export const GET_ACCOUNT_BY_ID = (accountId) => `${ACCOUNTS}/${encodeURIComponen
 export const GET_TRANSACTIONS_BY_ACCOUNT_ID = (accountId) =>
   withQuery(`${GET_ACCOUNT_BY_ID(accountId)}/transactions`, params)
 
+export const GET_TRANSACTIONS_BY_USER_ID = (params) => withQuery(`${ROOT}/transactions`, params)
+
 const withQuery = (url, params) => {
   if (!params) return url
   const query = new URLSearchParams(params).toString()

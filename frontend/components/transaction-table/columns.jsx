@@ -55,7 +55,7 @@ export const columns = [
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const [saving, setSaving] = useState(false)
       const category = row.original.category
-      const category_id = row.original.category_id
+      const _category_id = row.original.category_id
 
       const options = table.options.meta.options.category
       const current = category ?? ''
@@ -74,7 +74,7 @@ export const columns = [
             title: 'Category Updated',
             message: 'Category for transaction has been updated.',
           })
-        } catch (e) {
+        } catch (_) {
           table.options.meta.updateRow(rowIndex, { category: current })
           notify({
             type: 'error',
@@ -161,7 +161,6 @@ export const columns = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      // eslint-disable-next-line no-unused-vars
       const { is_fraud_suspected, _fraud_score } = row.original
 
       return (

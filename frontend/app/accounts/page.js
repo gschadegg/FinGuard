@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNotify } from '@/components/notification/NotificationProvider'
 import { columns } from '@/components/transaction-table/columns'
 import { TransactionDataTable } from '@/components/transaction-table'
@@ -10,36 +10,12 @@ import useCursor from '@/hooks/useCursor'
 
 export default function AccountsPage() {
   const notify = useNotify()
-  const [userId, setUserId] = useState(1)
-  const [start, setStart] = useState(null)
-  const [end, setEnd] = useState(null)
-  const [selected, setSelected] = useState(true)
-  const [refresh, setRefresh] = useState(false)
+  const [userId, _setUserId] = useState(1)
+  const [start, _setStart] = useState(null)
+  const [end, _setEnd] = useState(null)
+  const [selected, _setSelected] = useState(true)
+  const [refresh, _setRefresh] = useState(false)
 
-  //   useEffect(() => {
-  //     const ac = new AbortController()
-
-  //     async function load() {
-  //       try {
-  //         const res = await fetch(GET_TRANSACTIONS_BY_USER_ID({ user_id: 1 }), { signal: ac.signal })
-  //         if (!res.ok)
-  //           notify({
-  //             type: 'error',
-  //             title: 'Error',
-  //             message: 'Unable to fetch updated transaction data.',
-  //           })
-  //         const body = await res.json()
-  //         const data = body.items
-
-  //         setRows(Array.isArray(data) ? data : [])
-  //       } catch (e) {
-  //         if (e.name !== 'AbortError') notify({ type: 'error', title: e.name, message: e.message })
-  //       }
-  //     }
-
-  //     load()
-  //     return () => ac.abort()
-  //   }, [])
   const fetchTransactions = useCallback(
     async ({ limit, cursor, userId = 1, start, end, selected = true, refresh = false }) => {
       const params = new URLSearchParams()

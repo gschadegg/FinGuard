@@ -48,7 +48,7 @@ export function CreateLinkAccountButton({}) {
             title: 'Link Error',
             message: 'Could not finish linking.',
           })
-        const data = await res.json()
+        const _data = await res.json()
 
         // Instead want to sync connection item transactions?
         // data.connection_item_id  sync by the account

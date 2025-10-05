@@ -26,7 +26,15 @@ const eslintConfig = [
     files: ['**/*.{js,jsx}'],
     rules: {
       eqeqeq: ['error', 'always'], // error on using == vs ===
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }], //ignores unused if beginning with _
+      'no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ], //ignores unused if beginning with _
       'jsx-a11y/alt-text': 'warn', // img alt text req
       'jsx-a11y/anchor-is-valid': 'error', //checks a tags validity
       'no-console': ['warn', { allow: ['warn', 'error'] }], // checks for console.log

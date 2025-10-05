@@ -100,8 +100,8 @@ class SqlAccountRepo(AccountRepo):
             row.type = account.type
             row.subtype = account.subtype
             row.selected = True
-            row.institution_id = account.institution_id
-            row.institution_name = account.institution_name
+            row.institution_id = institution_id
+            row.institution_name = institution_name
 
             touched_accounts.append(row)
 

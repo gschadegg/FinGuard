@@ -4,10 +4,11 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { cookies } from 'next/headers'
 import { Geist, Geist_Mono } from 'next/font/google'
 
-import PageLayout from '../components/layouts/page-layout'
 import './globals.css'
 import { NotificationProvider } from '../components/notification/NotificationProvider'
 import NotificationStack from '../components/notification'
+
+import { UserProvider } from '@/components/user-data'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,17 +37,18 @@ export default async function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar />
+          <UserProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <AppSidebar />
 
-            <SidebarTrigger className="p-3 ml-2 mt-6.5" />
+              <SidebarTrigger className="p-3 ml-2 mt-6.5" />
 
-            <NotificationProvider>
-              <PageLayout pageTitle="All Transactions">{children}</PageLayout>
-              <NotificationStack />
-            </NotificationProvider>
-            {/* <main>{children}</main> */}
-          </SidebarProvider>
+              <NotificationProvider>
+                {children}
+                <NotificationStack />
+              </NotificationProvider>
+            </SidebarProvider>
+          </UserProvider>
         </ThemeProvider>
         <div />
       </body>

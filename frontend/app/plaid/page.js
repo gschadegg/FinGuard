@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { EXCHANGE_PLAID_TOKEN_URL, CREATE_PLAID_TOKEN_URL } from '@/lib/api_urls'
 import { Button } from '@/components/ui/button'
+import { useNotify } from '@/components/notification/NotificationProvider'
 
 export default function PlaidTest() {
+  const notify = useNotify()
   const [linkToken, setLinkToken] = useState(null)
   const [plaidItemId, setPlaidItemId] = useState(
     () => localStorage.getItem('plaid_item_id') || null
@@ -110,6 +112,36 @@ export default function PlaidTest() {
           Saved plaid_item_id: <code>{plaidItemId}</code>
         </small>
       )}
+
+      <p className="text-muted-foreground">This is /accounts/all-transactions.</p>
+      <button
+        className="px-3 py-2 rounded bg-primary text-primary-foreground"
+        onClick={() => notify({ type: 'success', title: 'Saved', message: 'Account linked.' })}
+      >
+        Success
+      </button>
+
+      <button
+        className="px-3 py-2 rounded bg-destructive text-destructive-foreground"
+        onClick={() => notify({ type: 'error', title: 'Error', message: 'Something went wrong.' })}
+      >
+        Error
+      </button>
+
+      <button
+        className="px-3 py-2 rounded bg-secondary text-secondary-foreground"
+        onClick={() =>
+          notify({ type: 'info', title: 'Information', message: 'Some general info.' })
+        }
+      >
+        Info
+      </button>
+      <button
+        className="px-3 py-2 rounded bg-secondary text-secondary-foreground"
+        onClick={() => notify({ type: 'info', title: null, message: null })}
+      >
+        test
+      </button>
     </div>
   )
 }

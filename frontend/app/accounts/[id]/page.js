@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNotify } from '@/components/notification/NotificationProvider'
 import { columns } from '@/components/transaction-table/columns'
 import { TransactionDataTable } from '@/components/transaction-table'
@@ -8,13 +8,15 @@ import PageLayout from '@/components/layouts/page-layout'
 import RollupCardRow from '@/components/rollup-cards'
 import useCursor from '@/hooks/useCursor'
 import { useParams } from 'next/navigation'
+import { useUserContext } from '@/components/user-data'
 export default function AccountsIDPage() {
   const notify = useNotify()
-
+  const { accounts } = useUserContext()
   const params = useParams()
   const id = params.id
 
   const [accountID, _setAccountID] = useState(id)
+  const [accountData, setAccountData] = useState(null)
   const [start, _setStart] = useState(null)
   const [end, _setEnd] = useState(null)
   const [selected, _setSelected] = useState(true)
@@ -58,8 +60,19 @@ export default function AccountsIDPage() {
 
   const pager = useCursor(fetchTransactions, 50, staticArgs)
 
+  const account = useMemo(
+    () => accounts?.find((a) => String(a.id) === String(accountID)),
+    [accounts, accountID]
+  )
+
+  const pageTitle = account
+    ? `${account.institution_name} - ${account.name}`
+    : accounts
+      ? 'Account not found'
+      : 'Loading…'
+
   return (
-    <PageLayout pageTitle="All Accounts">
+    <PageLayout pageTitle={pageTitle}>
       <RollupCardRow />
       <h2 className="text-xl text-gray-500 font-semibold tracking-tight mb-4">Transactions</h2>
       <TransactionDataTable columns={columns} pager={pager} />

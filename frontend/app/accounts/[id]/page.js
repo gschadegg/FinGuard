@@ -1,14 +1,68 @@
 'use client'
-import * as React from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
+import { useNotify } from '@/components/notification/NotificationProvider'
+import { columns } from '@/components/transaction-table/columns'
+import { TransactionDataTable } from '@/components/transaction-table'
+import { GET_TRANSACTIONS_BY_ACCOUNT_ID } from '@/lib/api_urls'
 import PageLayout from '@/components/layouts/page-layout'
-
+import RollupCardRow from '@/components/rollup-cards'
+import useCursor from '@/hooks/useCursor'
+import { useParams } from 'next/navigation'
 export default function AccountsIDPage() {
+  const notify = useNotify()
+
+  const params = useParams()
+  const id = params.id
+
+  const [accountID, _setAccountID] = useState(id)
+  const [start, _setStart] = useState(null)
+  const [end, _setEnd] = useState(null)
+  const [selected, _setSelected] = useState(true)
+  const [refresh, _setRefresh] = useState(true)
+
+  const fetchTransactions = useCallback(
+    async ({ limit, cursor, accountID, start, end, selected = true, refresh = true }) => {
+      const params = new URLSearchParams()
+      params.set('account_id', String(accountID))
+      params.set('limit', String(limit))
+      params.set('selected', String(selected))
+      if (cursor) params.set('cursor', cursor)
+
+      // date format should be YYYY-MM-DD, save for filtering if added later
+      if (start) params.set('start', start)
+      if (end) params.set('end', end)
+      if (refresh) params.set('refresh', refresh)
+
+      const res = await fetch(GET_TRANSACTIONS_BY_ACCOUNT_ID(accountID, params))
+      if (!res.ok)
+        notify({
+          type: 'error',
+          title: 'Error',
+          message: 'Unable to fetch transaction data.',
+        })
+      const data = await res.json() // return structure should be { items, next_cursor, has_more }
+
+      return {
+        rows: data.items ? data.items : [],
+        nextCursor: data.next_cursor ?? null,
+        hasMore: data.has_more,
+      }
+    },
+    [notify]
+  )
+
+  const staticArgs = useMemo(
+    () => ({ accountID, start, end, selected, refresh }),
+    [accountID, start, end, selected, refresh]
+  )
+
+  const pager = useCursor(fetchTransactions, 50, staticArgs)
+
   return (
-    <PageLayout pageTitle="Account Name">
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Accounts ID</h1>
-        <p className="text-muted-foreground">This is /accounts/all-transactions.</p>
-      </div>
+    <PageLayout pageTitle="All Accounts">
+      <RollupCardRow />
+      <h2 className="text-xl text-gray-500 font-semibold tracking-tight mb-4">Transactions</h2>
+      <TransactionDataTable columns={columns} pager={pager} />
     </PageLayout>
   )
 }

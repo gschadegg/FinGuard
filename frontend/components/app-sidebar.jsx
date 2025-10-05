@@ -15,18 +15,15 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import {
-  ChevronRight,
-  BookOpen,
-  Grid3x3,
-  ChartArea,
-  WalletMinimal,
-  UserCircle,
-  Plus,
-} from 'lucide-react'
-import { Button } from './ui/button'
+
+import { Skeleton } from './ui/skeleton'
+import { ChevronRight, BookOpen, Grid3x3, ChartArea, WalletMinimal, UserCircle } from 'lucide-react'
+import { useUserContext } from './user-data'
+import { CreateLinkAccountButton } from '@/components/create-plaid-connection'
 
 export function AppSidebar() {
+  const { accounts, userId } = useUserContext()
+
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-6 mb-3 flex justify-between border-b border-border">
@@ -76,18 +73,27 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuSubItem>
 
-                      {/* Need to make this dynamic */}
-
-                      <SidebarMenuSubItem>
-                        <SidebarMenuButton asChild>
-                          <Link href="#">Account 1</Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuButton asChild>
-                          <Link href="#">Account 2</Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuSubItem>
+                      {accounts ? (
+                        accounts.length > 0 ? (
+                          accounts.map((account) => (
+                            <SidebarMenuSubItem key={account.id}>
+                              <SidebarMenuButton asChild>
+                                <Link href={`/accounts/${account.id}`}>
+                                  {account.institution_name} - {account.name}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                          ))
+                        ) : (
+                          <SidebarMenuSubItem>No Linked Accounts</SidebarMenuSubItem>
+                        )
+                      ) : (
+                        <SidebarMenuSubItem>
+                          <SidebarMenuButton asChild>
+                            <Skeleton />
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      )}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
@@ -109,17 +115,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuSubItem>
                 <SidebarMenuButton asChild>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    asChild
-                    className="bg-secondary/90 text-secondary-foreground hover:bg-primary hover:text-primary-foreground border border-border/90"
-                  >
-                    <Link href="#">
-                      <Plus className="mr-2 size-4" />
-                      Add Account
-                    </Link>
-                  </Button>
+                  <CreateLinkAccountButton userId={userId} />
                 </SidebarMenuButton>
               </SidebarMenuSubItem>
             </SidebarMenu>

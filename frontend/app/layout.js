@@ -8,6 +8,8 @@ import './globals.css'
 import { NotificationProvider } from '../components/notification/NotificationProvider'
 import NotificationStack from '../components/notification'
 
+import { UserProvider } from '@/components/user-data'
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -35,16 +37,18 @@ export default async function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar />
+          <UserProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <AppSidebar />
 
-            <SidebarTrigger className="p-3 ml-2 mt-6.5" />
+              <SidebarTrigger className="p-3 ml-2 mt-6.5" />
 
-            <NotificationProvider>
-              {children}
-              <NotificationStack />
-            </NotificationProvider>
-          </SidebarProvider>
+              <NotificationProvider>
+                {children}
+                <NotificationStack />
+              </NotificationProvider>
+            </SidebarProvider>
+          </UserProvider>
         </ThemeProvider>
         <div />
       </body>

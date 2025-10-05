@@ -1,0 +1,51 @@
+- lot of learning on postgres and SQLAlchemy
+- need instructions on how to setup and find infoto view db in pgadmin
+- need the beginning of the database graph for the architecture document
+
+- added the initial wireframe for the main app so that there was a wireframe to show for report but also so that the task to create in app messaging would have somethign to go off of
+
+- made changes to backend structure so that db can be isolated to its own layer
+- running DB locally in docker with a persisting volumne
+- initial setup has script for running and setting up db
+- want to have a graphic for the structure of the api interfacing with the db with folders/files mentioned
+
+
+- running asyncio in async has issues with windows?
+
+
+- API and DB strcuture,
+    - Route logic stays in API/
+    - app/ contains the interfaces for the repos but all db repo logic is in the infrastructure, it also contains all of the services that use the DB repo based on the interface
+    - business rules are in the domain, the strcuture of the entitys and how the domain exceptions should be
+    - all details around persistence are in the infrastructure/db
+        - the DB models / schemas
+        - session maker & lifecycle
+        - db repo with implementation that can be mapped to the interface
+        - the API will depend on services available
+        - the Backend app will depend on the domain and interfaces
+        - infrastrcture/db will implement the interfaces and depends on the db and Domain business rules
+
+    - all dependencies are 1 way
+        
+
+- went with this architecture to have low coupling and useing interfaces. This also makes it much easier for testing since can now swap out the DB repos with a fake one for service testing
+- unit tests can run with fake DB repos and then integration tests can use the real report
+
+The backend and database are organized as a layered monolith: API → Services (use-cases) → Interfaces → DB Repositories → SQLAlchemy/DB. Routes only call services; services depend on interfaces (not concrete DB code); repositories implement those interfaces with SQLAlchemy and map data table rows to domain models. This keeps the database in its own layer, makes business logic easy to unit-test, and lets you swap DBs without touching routes or services.
+
+patterns:
+- repository pattern: created classes that contain the queries relating to certain areas. this allows for the details of SQL to be abstracted and hidden from the api. makes it simpler to test
+- Dependency injection: when wiring upservices all of them are passed the needed db repo with the db session it depends on. abstracts dependencies from routes and allows for easier testing and swapping implementations out
+- Interfaces: where added to have the services depend on certain contracts and not the implementation details. easier to mock for unit tests and easier to interchange
+- Service Layer pattern: centralizing and encapsulating the business logic in the services and out of routes so there is a clear separation of concerns and code is reusabile and easier to maintain.
+- Data Mapper Pattern: implementing mapping between the persistence layer and domain model to keep the two seperate. this is ensure that the domain model isn't aware how data is stored, keeps seperate of concerns, easier adaption if changes to data source
+
+
+
+ frontend is using a proxy approach, wrapping requests so that the API it's self isn't public and available for use
+ by doing this it does mean the application uses a single origin and CORs is not required. It keeps the API private and prevents the urls being exporsed and better control and observability
+ there is a trade off that it adds more overhead to the Next app and the cost will be a bit of latency. Thinking ahead the web socket that is being planned can not be done with a proxy so the will need to be routed directly, research will need to be done to ensure security and unwanted access to this specific route
+ its a forward proxy that allows for json normalization
+
+
+ - need to change how I'm approaching testing, input domain modeling doesnt look like it'd be the best when there are various responses from other code that could change the results

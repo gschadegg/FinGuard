@@ -1,0 +1,22 @@
+- new computer, needed to install node, npm, pnpm, etc for setup
+- setup github connection to Jira to have tickets link to Github branches and PRs
+- added Prettier and updates to Linking in VS code on save. 
+    - for setup notes: users need to use the Prettier extension the in command palette search for 'configure default formatter' and set the default formatter to 'Prettier - Code formatter'
+
+-Python env setup
+   - (in ./backend) python -m venv .venv
+   - .venv\Scripts\Activate.ps1
+
+
+schema
+ http://127.0.0.1:8000/openapi.json
+
+setting up scripts with pnpm in root dir and sub dirs
+pnpm run .. 
+
+
+
+for postman tests
+can get the schema from link above and import
+
+locally the collections from postman need to be exported and then included in the collections folder of the project

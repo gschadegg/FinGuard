@@ -1,0 +1,36 @@
+
+Documentation Tasks:
+
+SRS: 
+- Add SAC portion
+- Need open question addressed
+
+
+User Guide:
+- Component Portion 1: setup etc
+- Note: 2nd portion will need to be left towards end most likely
+
+
+Architecture & Design Doc:
+- Determine diagrams need over all
+	- architectural
+	- 
+
+
+Testing Plan:
+- Migrate over test from weekly reports
+
+
+
+Questions:
+- SRS: rubric says to include all the information for the CONOPS, but it also just lists "The CONOPS includes a mission statement, scope of the system, target audience, and features envisioned for the product." Should the SRS include the areas NOT mentioned such as definition of done, Domain, architecture diagram, languages, tool chain, team, participation, and completion of work sections etc?
+
+
+
+
+
+
+
+
+
+

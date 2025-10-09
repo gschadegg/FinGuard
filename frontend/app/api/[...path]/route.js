@@ -1,6 +1,6 @@
 // export const runtime = 'nodejs' // required if you proxy to http://localhost:8000
-
 import { proxyJson } from '@/lib/proxy'
+import { mockHandlers } from '@/e2e_tests/mocks/handlers'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const PROXY_API_PREFIX = '/api'
@@ -17,6 +17,13 @@ function buildTarget(req) {
 }
 
 async function handle(req) {
+  const url = new URL(req.url)
+  const pathAfterApi = url.pathname.replace(/^\/api\/?/, '')
+
+  if (process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
+    return mockHandlers(pathAfterApi)
+  }
+
   const target = buildTarget(req)
   return proxyJson(req, target)
 }

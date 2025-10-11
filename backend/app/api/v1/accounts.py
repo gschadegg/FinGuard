@@ -3,8 +3,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.domain.entities import FullAccountEntity
-from app.services.account_service import AccountService
 from app.security.auth import get_current_user
+from app.services.account_service import AccountService
 from app.services_container import get_account_service
 
 router = APIRouter(prefix="/accounts", tags=["accounts"], dependencies=[Depends(get_current_user)])

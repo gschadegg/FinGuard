@@ -1,5 +1,7 @@
 from functools import lru_cache
-from app.config import get_settings 
+
+from app.config import get_settings
+
 
 class AuthSettings:
     def __init__(self):

@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, NotFoundError
+from app.security.auth import get_current_user
 from app.services.user_service import UserService
 from app.services_container import get_user_service
-from app.security.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)] )
 

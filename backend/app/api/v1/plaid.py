@@ -3,9 +3,9 @@ from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.security.auth import get_current_user
 from app.services.plaid_service import PlaidService
 from app.services_container import get_plaid_service
-from app.security.auth import get_current_user
 
 router = APIRouter(prefix="/plaid", tags=["plaid"], dependencies=[Depends(get_current_user)])
 

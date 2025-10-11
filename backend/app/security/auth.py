@@ -1,14 +1,14 @@
-from fastapi import Depends, HTTPException, status
-# from fastapi.security import OAuth2PasswordBearer
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 import jwt
-from jwt import InvalidTokenError, ExpiredSignatureError
+from fastapi import Depends, HTTPException, status
 
-from app.auth_settings import get_auth_settings, AuthSettings 
+# from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt import ExpiredSignatureError, InvalidTokenError
+
+from app.auth_settings import AuthSettings, get_auth_settings
 from app.services.user_service import UserService
-from infrastructure.db.session import get_db
 from infrastructure.db.repos.user_repo import SqlUserRepo
+from infrastructure.db.session import get_db
 
 bearer_scheme = HTTPBearer(auto_error=True)
 

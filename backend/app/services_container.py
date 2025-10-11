@@ -1,6 +1,8 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth_settings import AuthSettings, get_auth_settings
+from app.config import get_settings
 from app.services.account_service import AccountService
 from app.services.auth_service import AuthService
 from app.services.plaid_service import PlaidService
@@ -12,13 +14,6 @@ from infrastructure.db.repos.transaction_repo import SqlTransactionRepo
 from infrastructure.db.repos.user_repo import SqlUserRepo
 from infrastructure.db.session import get_db
 
-
-from app.auth_settings import get_auth_settings, AuthSettings
-from app.services.user_service import UserService
-from app.services.auth_service import AuthService
-
-
-from app.config import get_settings
 settings = get_settings()
 
 

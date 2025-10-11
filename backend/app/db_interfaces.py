@@ -3,6 +3,7 @@ from typing import Iterable, Optional, Protocol, Sequence, Union
 
 from app.domain.entities import AccountEntity, ConnectionItemEntity, UserEntity
 from infrastructure.db.models import User
+
 # DB Repositories Interfaces
 
 

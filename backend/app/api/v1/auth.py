@@ -6,6 +6,7 @@ from app.domain.errors import ConflictError, UnauthorizedError
 from app.services.auth_service import AuthService
 from app.services_container import get_auth_service
 
+
 class Register(BaseModel):
     email: EmailStr
     name: str = Field(min_length=1, max_length=120)
@@ -27,7 +28,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
 async def register(payload: Register, svc: AuthService = Depends(get_auth_service)):
     try:
-        user, token = await svc.register(email=payload.email, name=payload.name, password=payload.password)
+        user, token = await svc.register(
+            email=payload.email, 
+            name=payload.name, 
+            password=payload.password
+        )
         return TokenOut(access_token=token, user=user)
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))

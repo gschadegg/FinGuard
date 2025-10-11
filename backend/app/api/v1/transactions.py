@@ -6,10 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.domain.entities import (
     TransactionsPageEntity,
 )
+from app.security.auth import get_current_user
 from app.services.transaction_service import TransactionService
 from app.services_container import get_transaction_service
 
-router = APIRouter(prefix="/transactions", tags=["transactions"])
+router = APIRouter(
+    prefix="/transactions", 
+    tags=["transactions"], 
+    dependencies=[Depends(get_current_user)]
+)
 
 
 # sync transactions by connection item

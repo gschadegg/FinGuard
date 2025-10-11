@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, NotFoundError
+from app.security.auth import get_current_user
 from app.services.user_service import UserService
 from app.services_container import get_user_service
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)] )
 
 # this is an example to figure out the structure and workflow I want to follow
 @router.post("", response_model=UserEntity, status_code=status.HTTP_201_CREATED)

@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     PLAID_CLIENT_ID: str
     PLAID_SECRET: str
     PLAID_ENCRYPT_KEY: str
+    AUTH_SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MIN: int
     # need to add each env variable expected if want to include and have access to it
 
     model_config = SettingsConfigDict(

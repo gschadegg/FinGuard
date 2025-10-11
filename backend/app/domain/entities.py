@@ -11,6 +11,9 @@ class UserEntity(BaseModel):
     email: EmailStr
     name: str
 
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AccountEntity(BaseModel):
     id: Optional[int] = None
     item_id: int

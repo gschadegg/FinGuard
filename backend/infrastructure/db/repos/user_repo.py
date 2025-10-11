@@ -24,13 +24,18 @@ class SqlUserRepo(UserRepo):
         res = await self.session.execute(select(User).where(User.email == email))
         row = res.scalar_one_or_none()
         return _to_entity(row) if row else None
+    
+    # creating this version that is private for auth use only so that typically the hashpassword isn't passed to services
+    async def _get_by_email(self, email: str) -> Optional[User]:
+        res = await self.session.execute(select(User).where(User.email == email))
+        return res.scalar_one_or_none()
 
     async def list(self) -> Sequence[UserEntity]:
         res = await self.session.execute(select(User).order_by(User.id))
         return [_to_entity(r) for r in res.scalars().all()]
 
-    async def add(self, user: UserEntity) -> UserEntity:
-        row = User(email=user.email, name=user.name)
+    async def add(self, user: UserEntity, password_hash) -> UserEntity:
+        row = User(email=user.email, name=user.name, password_hash=password_hash)
         self.session.add(row)
         
         # pushes the id of the changes to the db so it'll create keys and defaults

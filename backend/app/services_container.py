@@ -2,6 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.account_service import AccountService
+from app.services.auth_service import AuthService
 from app.services.plaid_service import PlaidService
 from app.services.transaction_service import TransactionService
 from app.services.user_service import UserService
@@ -10,6 +11,16 @@ from infrastructure.db.repos.connectionItem_repo import SqlConnectionItemRepo
 from infrastructure.db.repos.transaction_repo import SqlTransactionRepo
 from infrastructure.db.repos.user_repo import SqlUserRepo
 from infrastructure.db.session import get_db
+
+
+from app.auth_settings import get_auth_settings, AuthSettings
+from app.services.user_service import UserService
+from app.services.auth_service import AuthService
+
+
+from app.config import get_settings
+settings = get_settings()
+
 
 
 # want to be able to get a service that is then connected to the appropriate db repo and db session
@@ -40,6 +51,16 @@ async def get_account_service(
         plaid=plaid
     )
 
+async def get_auth_service(
+        settings: AuthSettings = Depends(get_auth_settings),
+        db: AsyncSession = Depends(get_db), 
+    ) -> AuthService:
+    user_repo = SqlUserRepo(db)
+    settings = settings
+    return AuthService(
+        user_repo=user_repo,
+        settings = settings
+    )
 
 async def get_transaction_service(
         db: AsyncSession = Depends(get_db), 

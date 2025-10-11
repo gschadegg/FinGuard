@@ -4,18 +4,19 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.domain.entities import FullAccountEntity
 from app.services.account_service import AccountService
+from app.security.auth import get_current_user
 from app.services_container import get_account_service
 
-router = APIRouter(prefix="/accounts", tags=["accounts"])
+router = APIRouter(prefix="/accounts", tags=["accounts"], dependencies=[Depends(get_current_user)])
 
 
 
 @router.get("", response_model=List[FullAccountEntity])
 async def get_all_accounts(
     user_id: int, 
-    selected: Optional[bool] = True, 
+    selected: Optional[bool] = True,
     svc: AccountService = Depends(get_account_service)):
-
+    
     try:
         return await svc.list_all_user_accounts(
             user_id=user_id,

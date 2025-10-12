@@ -12,9 +12,9 @@
     "test": "jest",
     "test:coverage": "jest --coverageReporters=text --coverageReporters=text-summary",
     "test:watch": "jest --watch",
-    "e2e:mocks": "cross-env USE_MOCKS=true playwright test",
-    "e2e:mocks:ui": "cross-env USE_MOCKS=true playwright test --ui",
-    "e2e:live": "cross-env USE_MOCKS=false playwright test",
+    "e2e:mocks": "cross-env NEXT_PUBLIC_USE_MOCKS=true USE_MOCKS=true playwright test",
+    "e2e:mocks:ui": "cross-env NEXT_PUBLIC_USE_MOCKS=true USE_MOCKS=true playwright test --ui",
+    "e2e:live": "cross-env NEXT_PUBLIC_USE_MOCKS=false USE_MOCKS=false playwright test",
     "serve:mocks": "cross-env USE_MOCKS=true next dev -p 3000",
     "serve:live": "cross-env USE_MOCKS=false next dev -p 3000",
     "e2e:record:dev": "playwright codegen http://localhost:3000"

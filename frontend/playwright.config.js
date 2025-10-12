@@ -42,21 +42,36 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+    // {
+    //   name: 'chromium',
+    //   use: { ...devices['Desktop Chrome'] },
+    // },
 
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
 
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: 'setup',
+      testMatch: ['e2e_tests/auth.setup.spec.js'],
     },
-
+    {
+      name: 'auth',
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e_tests/.auth/storageState.json' },
+      testMatch: /.*\.spec\.(js|ts)$/,
+      testIgnore: /.*\.auth\.spec\.(js|ts)$/,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'anon',
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
+      testMatch: /.*\.auth\.spec\.(js|ts)$/,
+    },
     /* Test against mobile viewports. */
     // {
     //   name: 'Mobile Chrome',
@@ -80,10 +95,15 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `cross-env NEXT_PUBLIC_USE_MOCKS=${USE_MOCKS ? 'true' : 'false'} next dev -p 3000`,
-    url: 'http://127.0.0.1:3000',
+    command: `cross-env NEXT_PUBLIC_USE_MOCKS=${USE_MOCKS ? 'true' : 'false'} USE_MOCKS=${USE_MOCKS ? 'true' : 'false'} next dev -p 3000 -H 127.0.0.1`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { ...process.env, NEXT_PUBLIC_USE_MOCKS: USE_MOCKS ? 'true' : 'false' },
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_USE_MOCKS: USE_MOCKS ? 'true' : 'false',
+      USE_MOCKS: USE_MOCKS ? 'true' : 'false',
+      BASE_URL,
+    },
   },
 })

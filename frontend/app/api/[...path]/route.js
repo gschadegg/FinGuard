@@ -20,8 +20,8 @@ async function handle(req) {
   const url = new URL(req.url)
   const pathAfterApi = url.pathname.replace(/^\/api\/?/, '')
 
-  if (process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
-    return mockHandlers(pathAfterApi)
+  if (process.env.NEXT_PUBLIC_USE_MOCKS === 'true' || process.env.USE_MOCKS === 'true') {
+    return await mockHandlers(req, pathAfterApi)
   }
 
   const target = buildTarget(req)

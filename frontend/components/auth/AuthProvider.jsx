@@ -210,7 +210,7 @@ export function AuthProvider({ children }) {
         router.replace(next)
       }
     },
-    [router]
+    [router, notify]
   )
 
   const refreshToken = useCallback(async () => {

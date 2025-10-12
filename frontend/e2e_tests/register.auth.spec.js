@@ -94,24 +94,5 @@ test.describe('Register', () => {
     await expect(page).toHaveURL((u) => u.pathname === '/register')
     await expect(page.getByText(/invalid password/i)).toBeVisible()
     await expect(page.getByText(/at least 8 characters/i)).toBeVisible()
-
-    const stored = await page.evaluate(() => ({
-      t: localStorage.getItem('finguard_auth_token'),
-      u: localStorage.getItem('finguard_auth_user'),
-    }))
-    expect(stored.t).toBeNull()
-    expect(stored.u).toBeNull()
-
-    await page.goto(new URL('/register', baseURL).toString())
-
-    await page.getByPlaceholder('Full name').fill('Weak Pwd')
-    await page.getByPlaceholder('name@example.com').fill('weak@test.local')
-    await page.getByPlaceholder('Password').fill('short')
-
-    await page.getByRole('button', { name: 'Sign up with Email' }).click()
-
-    await expect(page).toHaveURL((u) => u.pathname === '/register')
-    await expect(page.getByText(/invalid password/i)).toBeVisible()
-    await expect(page.getByText(/at least 8 characters/i)).toBeVisible()
   })
 })

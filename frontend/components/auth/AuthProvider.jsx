@@ -178,18 +178,37 @@ export function AuthProvider({ children }) {
         method: 'POST',
         body: JSON.stringify({ name, email, password }),
       })
-      if (!data?.access_token) throw new Error('No access token from register')
-      if (isExpired(data.access_token)) throw new Error('Received expired token')
 
-      setToken(data.access_token)
-      localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, data.access_token)
+      if (data?.detail && data.detail === 'Email already exists') {
+        notify({
+          type: 'error',
+          title: 'Unable to Create Account',
+          message: 'An account with that email already exists, please use another.',
+        })
+      } else if (data?.detail && Array.isArray(data?.detail)) {
+        const check = data?.detail[0] || null
+        if (check) {
+          if (check?.loc.find((str) => str === 'password') && check?.type === 'string_too_short') {
+            notify({
+              type: 'error',
+              title: 'Invalid Password',
+              message: 'Password should have at least 8 characters.',
+            })
+          }
+        }
+      } else if (!data?.access_token) throw new Error('No access token from register')
+      else if (isExpired(data.access_token)) throw new Error('Received expired token')
+      else {
+        setToken(data.access_token)
+        localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, data.access_token)
 
-      const user = data.user
-      setUser(user)
-      if (user) localStorage.setItem(LOCAL_STORAGE_USER, JSON.stringify(user))
+        const user = data.user
+        setUser(user)
+        if (user) localStorage.setItem(LOCAL_STORAGE_USER, JSON.stringify(user))
 
-      setShowSessionPrompt(false)
-      router.replace(next)
+        setShowSessionPrompt(false)
+        router.replace(next)
+      }
     },
     [router]
   )

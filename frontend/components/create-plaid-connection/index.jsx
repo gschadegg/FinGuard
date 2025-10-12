@@ -6,9 +6,11 @@ import { useNotify } from '@/components/notification/NotificationProvider'
 import { Plus, Loader2 } from 'lucide-react'
 import { EXCHANGE_PLAID_TOKEN_URL, CREATE_PLAID_TOKEN_URL } from '@/lib/api_urls'
 import { useUserContext } from '../user-data'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 export function CreateLinkAccountButton({}) {
   const notify = useNotify()
+  const { makeAuthRequest } = useAuth()
   const { userId, refreshAccounts } = useUserContext()
   const [linkToken, setLinkToken] = useState(null)
   const [autoOpen, setAutoOpen] = useState(false)
@@ -30,9 +32,8 @@ export function CreateLinkAccountButton({}) {
           subtype: a.subtype,
         }))
 
-        const res = await fetch(EXCHANGE_PLAID_TOKEN_URL, {
+        await makeAuthRequest(EXCHANGE_PLAID_TOKEN_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             public_token,
             user_id: userId,
@@ -41,17 +42,6 @@ export function CreateLinkAccountButton({}) {
             unselect_others: false,
           }),
         })
-
-        if (!res.ok)
-          notify({
-            type: 'error',
-            title: 'Link Error',
-            message: 'Could not finish linking.',
-          })
-        const _data = await res.json()
-
-        // Instead want to sync connection item transactions?
-        // data.connection_item_id  sync by the account
 
         notify({ type: 'success', title: 'Connected', message: 'New connection created.' })
       } catch (_e) {
@@ -74,21 +64,17 @@ export function CreateLinkAccountButton({}) {
   const handleClick = useCallback(async () => {
     try {
       setIsLoading(true)
-      const res = await fetch(CREATE_PLAID_TOKEN_URL, {
+      const data = await makeAuthRequest(CREATE_PLAID_TOKEN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, mode: 'create' }),
       })
-      if (!res.ok)
-        notify({ type: 'error', title: 'Token Error', message: 'Unable to start Plaid Link.' })
-      const data = await res.json()
       setLinkToken(data.link_token)
       setAutoOpen(true)
     } catch (_e) {
       notify({ type: 'error', title: 'Token Error', message: 'Unable to start Plaid Link.' })
       setIsLoading(false)
     }
-  }, [userId, notify])
+  }, [userId, notify, makeAuthRequest])
 
   useEffect(() => {
     if (autoOpen && linkToken && ready) open()
@@ -100,7 +86,7 @@ export function CreateLinkAccountButton({}) {
       disabled={isLoading}
       size="sm"
       variant="secondary"
-      className="w-full bg-secondary/90 text-secondary-foreground hover:bg-primary hover:text-primary-foreground border border-border/90"
+      className="w-full cursor-pointer bg-secondary/90 text-secondary-foreground hover:bg-primary hover:text-primary-foreground border border-border/90"
     >
       {isLoading ? (
         <span className="inline-flex items-center">

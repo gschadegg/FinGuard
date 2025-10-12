@@ -6,18 +6,27 @@ import { TransactionDataTable } from '@/components/transaction-table'
 import { GET_TRANSACTIONS_BY_USER_ID } from '@/lib/api_urls'
 import PageLayout from '@/components/layouts/page-layout'
 import RollupCardRow from '@/components/rollup-cards'
+import { useAuth } from '@/components/auth/AuthProvider'
 import useCursor from '@/hooks/useCursor'
+import { RotateCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const STALE_DATA = 5 * 60 * 1000
 
 export default function AccountsPage() {
   const notify = useNotify()
-  const [userId, _setUserId] = useState(1)
+  const { user, makeAuthRequest, isLoading } = useAuth()
+  const userId = user?.id
+
   const [start, _setStart] = useState(null)
   const [end, _setEnd] = useState(null)
   const [selected, _setSelected] = useState(true)
-  const [refresh, _setRefresh] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const fetchTransactions = useCallback(
-    async ({ limit, cursor, userId = 1, start, end, selected = true, refresh = false }) => {
+    async ({ limit, cursor, userId, start, end, selected = true }) => {
+      if (!userId) return { rows: [], nextCursor: null, hasMore: false }
+
       const params = new URLSearchParams()
       params.set('user_id', String(userId))
       params.set('limit', String(limit))
@@ -27,37 +36,68 @@ export default function AccountsPage() {
       // date format should be YYYY-MM-DD, save for filtering if added later
       if (start) params.set('start', start)
       if (end) params.set('end', end)
-      if (refresh) params.set('refresh', refresh)
 
-      const res = await fetch(GET_TRANSACTIONS_BY_USER_ID(params))
-      if (!res.ok)
+      const timestampKey = userId ? `last_transaction_fetch_${userId}` : null
+      const last = timestampKey ? Number(localStorage.getItem(timestampKey) || 0) : 0
+      const shouldRefresh = Date.now() - last > STALE_DATA
+
+      if (shouldRefresh) params.set('refresh', true)
+      try {
+        const res = await makeAuthRequest(GET_TRANSACTIONS_BY_USER_ID(params))
+        if (timestampKey) localStorage.setItem(timestampKey, String(Date.now()))
+        return {
+          rows: res.items ? res.items : [],
+          nextCursor: res.next_cursor ?? null,
+          hasMore: res.has_more,
+        }
+      } catch {
         notify({
           type: 'error',
-          title: 'Error',
-          message: 'Unable to fetch transaction data.',
+          title: 'Account Error',
+          message: 'Experienced issues fetching transactions, please try again.',
         })
-      const data = await res.json() // return structure should be { items, next_cursor, has_more }
-
-      return {
-        rows: data.items ? data.items : [],
-        nextCursor: data.next_cursor ?? null,
-        hasMore: data.has_more,
+        return {
+          rows: [],
+          nextCursor: null,
+          hasMore: false,
+        }
       }
     },
-    [notify]
+    [makeAuthRequest, notify]
   )
 
   const staticArgs = useMemo(
-    () => ({ userId, start, end, selected, refresh }),
-    [userId, start, end, selected, refresh]
+    () => ({ userId, start, end, selected, refreshTrigger }),
+    [userId, start, end, selected, refreshTrigger]
   )
 
   const pager = useCursor(fetchTransactions, 50, staticArgs)
 
+  const handleManualRefresh = useCallback(() => {
+    if (!userId) return
+    localStorage.setItem(`last_transaction_fetch_${userId}`, '0')
+    setRefreshTrigger((n) => n + 1)
+  }, [userId])
+
+  if (isLoading) return null
+
   return (
     <PageLayout pageTitle="All Accounts">
       <RollupCardRow />
-      <h2 className="text-xl text-gray-500 font-semibold tracking-tight mb-4">Transactions</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl text-gray-500 font-semibold tracking-tight mb-4">Transactions</h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="cursor-pointer inline-flex items-center gap-2"
+          onClick={handleManualRefresh}
+          title="Refresh transactions"
+        >
+          <RotateCw className="h-4 w-4" aria-hidden="true" />
+          Refresh
+        </Button>
+      </div>
       <TransactionDataTable columns={columns} pager={pager} />
     </PageLayout>
   )

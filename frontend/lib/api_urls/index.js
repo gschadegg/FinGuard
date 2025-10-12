@@ -5,6 +5,10 @@ export const USERS = `${ROOT}/users`
 export const ACCOUNTS = `${ROOT}/accounts`
 export const PLAID_BASE = `${ROOT}/plaid`
 
+export const USER_REGISTER_URL = `${ROOT}/auth/register`
+export const USER_LOGIN_URL = `${ROOT}/auth/login`
+export const AUTH_TOKEN_REFRESH_URL = `${ROOT}/auth/refresh`
+
 export const CREATE_PLAID_TOKEN_URL = `${PLAID_BASE}/token/create`
 export const EXCHANGE_PLAID_TOKEN_URL = `${PLAID_BASE}/token/exchange`
 

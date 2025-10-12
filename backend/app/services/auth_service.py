@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from jwt import InvalidTokenError
 from passlib.context import CryptContext
 
 from app.auth_settings import AuthSettings, get_auth_settings
@@ -8,8 +9,6 @@ from app.config import get_settings
 from app.db_interfaces import UserRepo
 from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, UnauthorizedError
-
-from jwt import InvalidTokenError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

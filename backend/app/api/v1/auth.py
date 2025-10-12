@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field
 
 from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, UnauthorizedError
 from app.services.auth_service import AuthService
 from app.services_container import get_auth_service
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 
 class Register(BaseModel):
     email: EmailStr

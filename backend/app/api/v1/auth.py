@@ -1,17 +1,43 @@
+import re
+import unicodedata
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, UnauthorizedError
 from app.services.auth_service import AuthService
 from app.services_container import get_auth_service
 
+UPPERCASE_CHAR   = re.compile(r'[A-Z]')
+SPECIAL_CHAR = re.compile(r'[^A-Za-z0-9]')
 
+def _normalize(p: str) -> str:
+    return unicodedata.normalize("NFKC", p)
+
+
+# enforcing passwords with:
+# - min 12 chars length
+# - 1 special character
+# - 1 upper case character
 class Register(BaseModel):
     email: EmailStr
     name: str = Field(min_length=1, max_length=120)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=12, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def password_policy(cls, val: str) -> str:
+        val = _normalize(val)
+        if any(char.isspace() for char in val):
+            raise ValueError("Password must not contain whitespace.")
+        if not UPPERCASE_CHAR.search(val) or not SPECIAL_CHAR.search(val):
+            raise ValueError(
+                "Password must include at least one uppercase and one special character."
+            )
+        return val
+
 
 class Login(BaseModel):
     email: EmailStr

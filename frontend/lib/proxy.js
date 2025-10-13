@@ -43,7 +43,7 @@ async function readBody(req) {
   if (req.method === 'GET' || req.method === 'HEAD') return undefined
   const ct = (req.headers.get('content-type') || '').toLowerCase()
   if (!ct) return undefined
-  if (ct.includes('application/json')) return JSON.stringify(await req.json())
+  if (ct.includes('application/json')) return JSON.stringify(await req.json()) || {}
   if (ct.includes('application/x-www-form-urlencoded')) return await req.text()
 
   return await req.text()

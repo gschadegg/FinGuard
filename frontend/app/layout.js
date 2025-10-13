@@ -1,15 +1,14 @@
 import { ThemeProvider } from '@/components/mode-toggle/theme-provider'
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { AppSidebar } from '@/components/app-sidebar'
-import { cookies } from 'next/headers'
 import { Geist, Geist_Mono } from 'next/font/google'
 
 import './globals.css'
-import { NotificationProvider } from '../components/notification/NotificationProvider'
-import NotificationStack from '../components/notification'
+import { NotificationProvider } from '@/components/notification/NotificationProvider'
 
 import { UserProvider } from '@/components/user-data'
+import { AuthProvider } from '@/components/auth/AuthProvider'
+import { cookies } from 'next/headers'
 
+import MainNavLayout from '@/components/layouts/MainNav-Layout'
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -37,18 +36,13 @@ export default async function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider>
-            <SidebarProvider defaultOpen={defaultOpen}>
-              <AppSidebar />
-
-              <SidebarTrigger className="p-3 ml-2 mt-6.5" />
-
-              <NotificationProvider>
-                {children}
-                <NotificationStack />
-              </NotificationProvider>
-            </SidebarProvider>
-          </UserProvider>
+          <NotificationProvider>
+            <AuthProvider>
+              <UserProvider>
+                <MainNavLayout defaultOpen={defaultOpen}>{children}</MainNavLayout>
+              </UserProvider>
+            </AuthProvider>
+          </NotificationProvider>
         </ThemeProvider>
         <div />
       </body>

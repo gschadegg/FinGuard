@@ -2,42 +2,43 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { GET_ALL_ACCOUNTS } from '@/lib/api_urls'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 const UserContext = createContext(null)
 
 export const UserProvider = ({ children }) => {
-  const [userId, _setUserId] = useState(1)
+  const { user, makeAuthRequest } = useAuth()
   const [accounts, setAccounts] = useState(null)
   const [_isLoading, _setIsLoading] = useState(false)
 
   const getAccounts = useCallback(async () => {
-    const params = {
-      user_id: userId,
-    }
-    const queryParams = new URLSearchParams(params)
+    if (!user?.id) return
+    _setIsLoading(true)
+
     try {
-      const r = await fetch(`${GET_ALL_ACCOUNTS}?${queryParams.toString()}`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      const json = await r.json()
-
-      setAccounts(json)
+      const params = new URLSearchParams({ user_id: String(user.id) })
+      const data = await makeAuthRequest(`${GET_ALL_ACCOUNTS}?${params}`)
+      setAccounts(data)
     } catch {
+      notify({
+        type: 'error',
+        title: 'Account Error',
+        message: 'Experienced issues fetching your accounts, please refresh the page to try again.',
+      })
       setAccounts([])
+    } finally {
+      _setIsLoading(false)
     }
-  }, [userId])
+  }, [user?.id, makeAuthRequest])
 
-  const refreshAccounts = () => {
-    getAccounts()
-  }
   useEffect(() => {
     getAccounts()
-  }, [userId, getAccounts])
+  }, [getAccounts])
 
   return (
-    <UserContext.Provider value={{ userId, accounts, refreshAccounts }}>
+    <UserContext.Provider
+      value={{ user: user, userId: user?.id, accounts, _isLoading, refreshAccounts: getAccounts }}
+    >
       {children}
     </UserContext.Provider>
   )

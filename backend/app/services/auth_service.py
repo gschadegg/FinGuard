@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from jwt import InvalidTokenError
 from passlib.context import CryptContext
 
 from app.auth_settings import AuthSettings, get_auth_settings
@@ -18,6 +19,7 @@ class AuthService:
     def __init__(self, user_repo: UserRepo, settings: AuthSettings | None = None):
         self.user_repo = user_repo
         self.settings = settings or get_auth_settings()
+        self._REFRESH_WINDOW_SECONDS = 120
 
     def _hash(self, password: str) -> str:
         return pwd_context.hash(password)
@@ -56,3 +58,42 @@ class AuthService:
         user = UserEntity(id=row.id, email=row.email, name=row.name)
         token = self._create_access_token(sub=row.email, user_id=row.id)
         return user, token
+
+    # need to be able to refresh the token after an alloted time
+    async def refresh_access_token(self, current_access_token: str) -> tuple[UserEntity, str]:
+        try:
+            payload = jwt.decode(
+                current_access_token,
+                self.settings.SECRET_KEY,
+                algorithms=[self.settings.ALGORITHM],
+                options={"verify_exp": False},
+            )
+        except InvalidTokenError:
+            raise UnauthorizedError("Invalid token")
+
+        uid = payload.get("uid")
+        sub = payload.get("sub")
+        exp = payload.get("exp")
+
+        if not uid or not sub or not exp:
+            raise UnauthorizedError("Invalid token")
+
+        now = int(datetime.now(timezone.utc).timestamp())
+        time_left = exp - now
+
+        if time_left <= 0:
+            raise UnauthorizedError("Token is expired")
+
+        # need to limit the window when users can refresh token
+        if time_left > self._REFRESH_WINDOW_SECONDS:
+            raise UnauthorizedError("Cannot refresh")
+
+        row = await self.user_repo.get_by_id(uid)
+
+
+        new_access_token = self._create_access_token(sub=sub, user_id=uid)
+        user = UserEntity(id=getattr(row, "id", uid), 
+                          email=sub, 
+                          name=getattr(row, "name", None))
+        
+        return user, new_access_token

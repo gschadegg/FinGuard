@@ -41,25 +41,33 @@ export async function normalizeToJson(upstream) {
 
 async function readBody(req) {
   if (req.method === 'GET' || req.method === 'HEAD') return undefined
-  const ct = req.headers.get('content-type') || ''
+  const ct = (req.headers.get('content-type') || '').toLowerCase()
+  if (!ct) return undefined
   if (ct.includes('application/json')) return JSON.stringify(await req.json())
   if (ct.includes('application/x-www-form-urlencoded')) return await req.text()
-  return req.body
+
+  return await req.text()
 }
 
 export async function proxyJson(req, targetUrl) {
   try {
-    const upstream = await fetch(targetUrl, {
+    const body = await readBody(req)
+
+    const init = {
       method: req.method,
       headers: sanitizeHeaders(req.headers),
-      body: await readBody(req),
       cache: 'no-store',
       redirect: 'manual',
-    })
+    }
+    if (body !== undefined) {
+      init.body = body
+    }
+    const upstream = await fetch(targetUrl, init)
+
     return normalizeToJson(upstream)
   } catch (err) {
     const name = err?.name || ''
-    const status = /timeout/i.test(name) ? 504 : 502 // timeout or bad gateway status
+    const status = /timeout/i.test(name) ? 504 : 502
     return NextResponse.json(
       { ok: false, status, error: String(err?.message || err), code: err?.code ?? null },
       { status }

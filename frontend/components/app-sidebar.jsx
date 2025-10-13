@@ -15,14 +15,25 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Button } from '@/components/ui/button'
 
 import { Skeleton } from './ui/skeleton'
-import { ChevronRight, BookOpen, Grid3x3, ChartArea, WalletMinimal, UserCircle } from 'lucide-react'
+import {
+  ChevronRight,
+  BookOpen,
+  Grid3x3,
+  ChartArea,
+  WalletMinimal,
+  UserCircle,
+  Info,
+} from 'lucide-react'
 import { useUserContext } from './user-data'
 import { CreateLinkAccountButton } from '@/components/create-plaid-connection'
+import { useAuth } from './auth/AuthProvider'
 
 export function AppSidebar() {
-  const { accounts, userId } = useUserContext()
+  const { accounts, user } = useUserContext()
+  const { logout } = useAuth()
 
   return (
     <Sidebar>
@@ -85,7 +96,15 @@ export function AppSidebar() {
                             </SidebarMenuSubItem>
                           ))
                         ) : (
-                          <SidebarMenuSubItem>No Linked Accounts</SidebarMenuSubItem>
+                          <SidebarMenuSubItem
+                            aria-disabled="true"
+                            className="cursor-default select-none text-xs italic text-muted-foreground pl-8 py-1.5 leading-5"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Info className="h-3.5 w-3.5 opacity-60" />
+                              No linked accounts
+                            </span>
+                          </SidebarMenuSubItem>
                         )
                       ) : (
                         <SidebarMenuSubItem>
@@ -115,7 +134,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuSubItem>
                 <SidebarMenuButton asChild>
-                  <CreateLinkAccountButton userId={userId} />
+                  <CreateLinkAccountButton userId={user?.id} />
                 </SidebarMenuButton>
               </SidebarMenuSubItem>
             </SidebarMenu>
@@ -128,12 +147,26 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="#" className="group inline-flex items-center gap-2">
-                <UserCircle className="size-5" />
-                <span className="truncate">
-                  Signed in as <strong>User</strong>
-                </span>
-              </Link>
+              <div className="group inline-flex items-center gap-2">
+                <div className="min-w-0 flex items-center gap-2">
+                  <UserCircle className="size-5 shrink-0" />
+                  <span className="truncate">
+                    Signed in as <strong>{user?.name}</strong>
+                  </span>
+                </div>
+                <Button
+                  variant="link"
+                  type="button"
+                  className="ml-auto h-auto p-0 cursor-pointer hover:underline"
+                  title="Logout"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    logout()
+                  }}
+                >
+                  Logout
+                </Button>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

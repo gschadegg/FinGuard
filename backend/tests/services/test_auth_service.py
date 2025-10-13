@@ -8,13 +8,14 @@ from app.services.auth_service import AuthService
 from app.services.auth_service import pwd_context as _pwd_context_module
 
 import jwt as _jwt_module
-
+import time
 
 class MockUserRepo:
     def __init__(self):
         self._by_email = {}      
         self._by_email_with_hash = {} 
         self._add_return = None
+        self._by_id = {}
 
         # get by email calls (no hash)
         self.get_by_email_calls = []
@@ -22,6 +23,7 @@ class MockUserRepo:
         # get by email with hash called
         self._get_by_email_calls = []
         self.add_calls = []
+        self.get_by_id_calls = []
 
     async def get_by_email(self, email: str):
         self.get_by_email_calls.append({"email": email})
@@ -34,6 +36,10 @@ class MockUserRepo:
     async def add(self, user_entity: UserEntity, password_hash: str):
         self.add_calls.append({"user": user_entity, "password_hash": password_hash})
         return self._add_return
+    
+    async def get_by_id(self, user_id: int):
+        self.get_by_id_calls.append({"id": user_id})
+        return self._by_id.get(user_id)
 
 
 class MockAuthSettings(AuthSettings):
@@ -47,7 +53,10 @@ def svc(monkeypatch):
     user_repo = MockUserRepo()
     settings = MockAuthSettings()
 
-    return AuthService(user_repo=user_repo, settings=settings)
+    service = AuthService(user_repo=user_repo, settings=settings)
+    service._REFRESH_WINDOW_SECONDS = 120
+
+    return service
 
 
 
@@ -80,7 +89,24 @@ def mock_jwt_encode(monkeypatch):
     monkeypatch.setattr(_jwt_module, "encode", fake_encode)
     return calls
 
+@pytest.fixture
+def mock_jwt_decode(monkeypatch):
+    calls = {
+        "args": None,
+        "kwargs": None,
+        "return_payload": None,
+        "raise_invalid": False,
+    }
 
+    def fake_decode(*args, **kwargs):
+        calls["args"] = args
+        calls["kwargs"] = kwargs
+        if calls["raise_invalid"]:
+            raise _jwt_module.InvalidTokenError("bad token")
+        return calls["return_payload"]
+
+    monkeypatch.setattr(_jwt_module, "decode", fake_decode)
+    return calls
 
 
 
@@ -206,3 +232,77 @@ async def test_login_row_to_domain_mapping(svc, mock_pwd_hash_verify, mock_jwt_e
     user, _ = await svc.login(email="no-hash@email.com", password="pw")
     assert isinstance(user, UserEntity)
     assert (user.id, user.email, user.name) == (11, "no-hash@email.com", "UserName")
+
+
+############################
+# refresh_access_token Tests
+############################
+
+# TC-AUTH-REFRESH-001: Base scenario, returns a new access token and current user object
+@pytest.mark.anyio
+async def test_refresh_base(svc, mock_jwt_decode, mock_jwt_encode):
+    now = int(time.time())
+    uid = 42
+    email = "user@email.com"
+
+    # token expires in 5 minutes: inside 10-min refresh window
+    mock_jwt_decode["return_payload"] = {"uid": uid, "sub": email, "exp": now + 1}
+    svc.user_repo._by_id[uid] = SimpleNamespace(id=uid, name="User", email=email)
+
+    user, new_token = await svc.refresh_access_token("old_token_value")
+
+    # check new token value
+    assert isinstance(user, UserEntity)
+    assert (user.id, user.email, user.name) == (uid, email, "User")
+    assert new_token == "token1"
+
+
+# TC-AUTH-REFRESH-002: Invalid token
+@pytest.mark.anyio
+async def test_refresh_invalid_token(svc, mock_jwt_decode, mock_jwt_encode):
+    mock_jwt_decode["raise_invalid"] = True
+
+    with pytest.raises(UnauthorizedError, match="Invalid token"):
+        await svc.refresh_access_token("invalidToken")
+
+    # encoded is not called
+    assert mock_jwt_encode["payload"] is None
+    assert svc.user_repo.get_by_id_calls == []
+
+
+# TC-AUTH-REFRESH-003: Some required data is missing
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"sub": "u@email.com", "exp": int(time.time()) + 120},
+        {"uid": 5, "exp": int(time.time()) + 120},
+        {"uid": 5, "sub": "u@email.com"},
+    ],
+)
+async def test_refresh_missing_data(svc, mock_jwt_decode, payload):
+    mock_jwt_decode["return_payload"] = payload
+    with pytest.raises(UnauthorizedError, match="Invalid token"):
+        await svc.refresh_access_token("token")
+
+
+# TC-AUTH-REFRESH-004: Token expired
+@pytest.mark.anyio
+async def test_refresh_expired_token(svc, mock_jwt_decode):
+    now = int(time.time())
+    mock_jwt_decode["return_payload"] = {"uid": 7, "sub": "test@email.com", "exp": now - 1}
+    with pytest.raises(UnauthorizedError, match="Token is expired"):
+        await svc.refresh_access_token("token")
+
+
+# TC-AUTH-REFRESH-005: Not in Refresh window / trying to refresh too early
+@pytest.mark.anyio
+async def test_refresh_too_early(svc, mock_jwt_decode):
+    now = int(time.time())
+
+    # svc._REFRESH_WINDOW_SECONDS = 300
+    setattr(svc, "_REFRESH_WINDOW_SECONDS", 60)
+    mock_jwt_decode["return_payload"] = {"uid": 8, "sub": "test@email.com", "exp": now + 1800}
+
+    with pytest.raises(UnauthorizedError, match="Cannot refresh"):
+        await svc.refresh_access_token("token")

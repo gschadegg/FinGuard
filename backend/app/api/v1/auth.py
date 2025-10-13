@@ -1,3 +1,6 @@
+import re
+import unicodedata
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -6,9 +9,6 @@ from app.domain.entities import UserEntity
 from app.domain.errors import ConflictError, UnauthorizedError
 from app.services.auth_service import AuthService
 from app.services_container import get_auth_service
-
-import re, unicodedata
-
 
 UPPERCASE_CHAR   = re.compile(r'[A-Z]')
 SPECIAL_CHAR = re.compile(r'[^A-Za-z0-9]')
@@ -33,7 +33,9 @@ class Register(BaseModel):
         if any(char.isspace() for char in val):
             raise ValueError("Password must not contain whitespace.")
         if not UPPERCASE_CHAR.search(val) or not SPECIAL_CHAR.search(val):
-            raise ValueError("Password must include at least one uppercase and one special character.")
+            raise ValueError(
+                "Password must include at least one uppercase and one special character."
+            )
         return val
 
 

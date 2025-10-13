@@ -4,19 +4,44 @@ import { test, expect } from '@playwright/test'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
+const goto = (page, baseURL, path) => page.goto(new URL(path, baseURL).toString())
+
 test.describe('Login', () => {
-  test.beforeEach(async ({ page, baseURL }) => {
-    await page.goto(new URL('/login', baseURL).toString())
+  test.beforeEach(async ({ page, baseURL, context }) => {
+    // await page.addInitScript(() => {
+    //   localStorage.clear()
+    //   sessionStorage.clear()
+    // })
 
-    await page.evaluate(() => {
-      localStorage.removeItem('finguard_auth_token')
-      localStorage.removeItem('finguard_auth_user')
+    await context.addInitScript(() => {
+      window.localStorage.removeItem('finguard_auth_token')
+      window.localStorage.removeItem('finguard_auth_user')
     })
+    // await page.context().clearCookies()
 
+    await goto(page, baseURL, '/login')
+
+    await page.waitForLoadState('domcontentloaded')
     await expect(page.getByRole('button', { name: /login/i })).toBeVisible()
   })
 
+  //TC-FLOW-LOGIN-001
   test('handles successful login', async ({ page }) => {
+    await page.route(
+      '**/api/auth/login',
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            access_token: 'test-token',
+            token_type: 'bearer',
+            user: { id: 1, email: process.env.E2E_EMAIL || 'a@b.com', name: 'Ok' },
+          }),
+        }),
+      { times: 1 }
+    )
+
     await page.getByPlaceholder(/name@example.com/i).fill(process.env.E2E_EMAIL || 'a@b.com')
     await page.getByPlaceholder(/Password/i).fill(process.env.E2E_PASSWORD || 'secretpassword')
 
@@ -25,9 +50,12 @@ test.describe('Login', () => {
     )
 
     await page.getByRole('button', { name: /Login/i }).click()
+
+    await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL((url) => url.pathname === '/')
   })
 
+  //TC-FLOW-LOGIN-002
   test('handles bad credentials', async ({ page, baseURL }) => {
     await page.getByPlaceholder(/name@example.com/i).fill('a@b.com')
     await page.getByPlaceholder(/Password/i).fill('wrong')
@@ -44,14 +72,18 @@ test.describe('Login', () => {
     await expect(page.getByText(/Failed login, invalid email or password/i)).toBeVisible()
   })
 
+  //TC-FLOW-LOGIN-003
   test('handles 500 response, failed Login ', async ({ page, baseURL }) => {
-    await page.route('**/api/auth/login', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Internal Server Error' }),
-      })
-    })
+    await page.route(
+      '**/api/auth/login',
+      (route) =>
+        route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ detail: 'Internal Server Error' }),
+        }),
+      { times: 1 }
+    )
 
     await page.getByPlaceholder(/name@example.com/i).fill('a@b.com')
     await page.getByPlaceholder(/Password/i).fill('secretpassword')

@@ -18,18 +18,30 @@ async function MakeRequest(input, init) {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
   })
+  let resJson
+  try {
+    resJson = await res.json()
+  } catch {}
   if (!res.ok) {
-    const resJson = await res.json()
+    // const resJson = (await res.json()) || {}
     const data = {
       ok: res.ok,
       status: res.status,
       url: res.url,
       statusText: res.statusText,
-      ...resJson,
+      ...(resJson && typeof resJson === 'object' ? resJson : {}),
     }
     return data
   }
-  return res.json()
+  return resJson //res.json()
+}
+
+function isValidToken(token) {
+  if (typeof token !== 'string') return false
+  const val = token.trim()
+  if (!val) return false
+  if (val === 'null' || val === 'undefined') return false
+  return true
 }
 
 export function AuthProvider({ children }) {
@@ -55,12 +67,14 @@ export function AuthProvider({ children }) {
       } catch {}
     }
 
-    if (token && !isExpired(token)) {
+    if (token && !isExpired(token) && isValidToken(token)) {
       setToken(token)
       setUser(user)
     } else {
       localStorage.removeItem(LOCAL_STORAGE_TOKEN_KEY)
       localStorage.removeItem(LOCAL_STORAGE_USER)
+      setToken(null)
+      setUser(null)
     }
     setIsLoading(false)
   }, [])
@@ -74,10 +88,12 @@ export function AuthProvider({ children }) {
         const raw = localStorage.getItem(LOCAL_STORAGE_USER)
         user = raw ? JSON.parse(raw) : null
       } catch {}
-      if (token && !isExpired(token)) {
+      if (token && !isExpired(token) && isValidToken(token)) {
         setToken(token)
         setUser(user)
       } else {
+        localStorage.removeItem(LOCAL_STORAGE_TOKEN_KEY)
+        localStorage.removeItem(LOCAL_STORAGE_USER)
         setToken(null)
         setUser(null)
       }
@@ -105,7 +121,7 @@ export function AuthProvider({ children }) {
   const makeAuthRequest = useCallback(
     async (input, init) => {
       const headers = { 'Content-Type': 'application/json', ...(init?.headers || {}) }
-      if (token) headers.Authorization = `Bearer ${token}`
+      if (token && isValidToken(token)) headers.Authorization = `Bearer ${token}`
       const res = await fetch(input, { ...init, headers })
 
       if (res.status === 401) {
@@ -192,8 +208,21 @@ export function AuthProvider({ children }) {
             notify({
               type: 'error',
               title: 'Invalid Password',
-              message: 'Password should have at least 8 characters.',
+              message: 'Password should have at least 12 characters.',
             })
+
+            return 'Invalid Password'
+          } else if (
+            check?.loc.find((str) => str === 'password') &&
+            check?.type === 'value_error'
+          ) {
+            notify({
+              type: 'error',
+              title: 'Invalid Password',
+              message: 'Password must have at least 1 uppercase letter and 1 special character.',
+            })
+
+            return 'Invalid Password'
           }
         }
       } else if (!data?.access_token) throw new Error('No access token from register')
@@ -215,7 +244,7 @@ export function AuthProvider({ children }) {
 
   const refreshToken = useCallback(async () => {
     const auth = token || localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY)
-    if (!auth) throw new Error('No token to refresh')
+    if (!auth || !isValidToken(auth)) throw new Error('No token to refresh')
 
     const res = await fetch(AUTH_TOKEN_REFRESH_URL, {
       method: 'POST',

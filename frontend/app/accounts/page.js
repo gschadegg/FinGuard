@@ -28,7 +28,6 @@ export default function AccountsPage() {
       if (!userId) return { rows: [], nextCursor: null, hasMore: false }
 
       const params = new URLSearchParams()
-      params.set('user_id', String(userId))
       params.set('limit', String(limit))
       params.set('selected', String(selected))
       if (cursor) params.set('cursor', cursor)

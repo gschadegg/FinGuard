@@ -36,7 +36,6 @@ export function CreateLinkAccountButton({}) {
           method: 'POST',
           body: JSON.stringify({
             public_token,
-            user_id: userId,
             selected_accounts,
             institution,
             unselect_others: false,
@@ -66,7 +65,7 @@ export function CreateLinkAccountButton({}) {
       setIsLoading(true)
       const data = await makeAuthRequest(CREATE_PLAID_TOKEN_URL, {
         method: 'POST',
-        body: JSON.stringify({ user_id: userId, mode: 'create' }),
+        body: JSON.stringify({ mode: 'create' }),
       })
       setLinkToken(data.link_token)
       setAutoOpen(true)
@@ -74,7 +73,7 @@ export function CreateLinkAccountButton({}) {
       notify({ type: 'error', title: 'Token Error', message: 'Unable to start Plaid Link.' })
       setIsLoading(false)
     }
-  }, [userId, notify, makeAuthRequest])
+  }, [notify, makeAuthRequest])
 
   useEffect(() => {
     if (autoOpen && linkToken && ready) open()

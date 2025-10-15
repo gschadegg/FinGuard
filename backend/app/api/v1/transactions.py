@@ -76,4 +76,11 @@ async def list_account_transactions(
         
         await svc.sync_connection_item(found_account.item_id, user_id=current_user.id)
 
-    return await svc.list_account(account_id, start, end, user_id=current_user.id, limit=limit, cursor=cursor)
+    return await svc.list_account(
+        account_id, 
+        start, 
+        end, 
+        user_id=current_user.id, 
+        limit=limit, 
+        cursor=cursor
+    )

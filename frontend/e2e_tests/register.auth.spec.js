@@ -14,6 +14,7 @@ function getAlert(page) {
 }
 
 test.describe('Register', () => {
+  test.describe.configure({ mode: 'default' })
   test.beforeEach(async ({ page, baseURL, context }) => {
     // await page.addInitScript(() => {
     //   localStorage.clear()

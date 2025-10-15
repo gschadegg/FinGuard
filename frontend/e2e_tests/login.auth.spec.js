@@ -7,6 +7,7 @@ import React from 'react'
 const goto = (page, baseURL, path) => page.goto(new URL(path, baseURL).toString())
 
 test.describe('Login', () => {
+  test.describe.configure({ mode: 'default' })
   test.beforeEach(async ({ page, baseURL, context }) => {
     // await page.addInitScript(() => {
     //   localStorage.clear()

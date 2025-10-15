@@ -1,7 +1,7 @@
 const ROOT = '/api'
 
 export const HOME = ROOT
-export const USERS = `${ROOT}/users`
+// export const USERS = `${ROOT}/users`
 export const ACCOUNTS = `${ROOT}/accounts`
 export const PLAID_BASE = `${ROOT}/plaid`
 

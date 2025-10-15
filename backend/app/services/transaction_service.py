@@ -1,5 +1,7 @@
 from datetime import date
 
+from fastapi import HTTPException
+
 from app.db_interfaces import AccountRepo, ConnectionItemRepo, TransactionRepo
 from app.domain.entities import TransactionsPageEntity
 from app.security.crypto import decrypt
@@ -16,9 +18,9 @@ class TransactionService:
         self.plaid = plaid
 
 
-    async def sync_connection_item(self, item_id: int) -> dict:
+    async def sync_connection_item(self, item_id: int, user_id: int) -> dict:
         item = await self.connection_item_repo.get_by_id(item_id)
-        if not item:
+        if not item or item.user_id != user_id:
             return {"ok": False, "reason": "Connection Item not found"}
 
         access_token = decrypt(item.access_token_encrypted)
@@ -50,7 +52,7 @@ class TransactionService:
         totals = {"ok": True, "added": 0, "modified": 0, "removed": 0}
 
         for item_id in await self.connection_item_repo.list_ids_by_user(user_id) or []:
-            res = await self.sync_connection_item(item_id)
+            res = await self.sync_connection_item(item_id, user_id=user_id)
             if not res.get("ok"):
                 continue
 
@@ -85,9 +87,18 @@ class TransactionService:
             start: date | None, 
             end: date | None, 
             *,
+            user_id: int,
             limit: int = 50, 
             cursor: str | None = None
         ) -> TransactionsPageEntity:
+
+        account = await self.account_repo.get_one(account_id=account_id, plaid_account_id=None)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        item = await self.connection_item_repo.get_by_id(account.item_id)
+        if not item or item.user_id != user_id:
+            raise HTTPException(status_code=404, detail="Account not found")
         
         return await self.transaction_repo.list_by_account_paginated(
             account_id, start, end, limit=limit, cursor=cursor)

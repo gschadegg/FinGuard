@@ -10,7 +10,6 @@ from app.services_container import get_plaid_service
 router = APIRouter(prefix="/plaid", tags=["plaid"], dependencies=[Depends(get_current_user)])
 
 class LinkTokenBody(BaseModel):
-    user_id: int
     mode: Literal["create","update"] = "create"
     plaid_item_id: Optional[str] = None
 
@@ -33,16 +32,18 @@ class InstitutionBody(BaseModel):
 class ExchangeBody(BaseModel):
     public_token: str
     selected_accounts: List[AccountBodyEntity] = Field(default_factory=list)
-    user_id:int
     institution: InstitutionBody | None = None
     unselect_others: bool = False
 
 
 @router.post("/token/create")# response_model
-async def create_link(body: LinkTokenBody, svc: PlaidService = Depends(get_plaid_service)):
+async def create_link(
+    body: LinkTokenBody, 
+    svc: PlaidService = Depends(get_plaid_service), 
+    current_user = Depends(get_current_user)):
     try:
         return await svc.create_link_token(
-            user_id=body.user_id,
+            user_id=current_user.id,
             mode=body.mode,
             plaid_item_id=body.plaid_item_id
         )
@@ -51,7 +52,10 @@ async def create_link(body: LinkTokenBody, svc: PlaidService = Depends(get_plaid
 
 
 @router.post("/token/exchange") # response_model
-async def exchange_token(body:ExchangeBody, svc: PlaidService = Depends(get_plaid_service)):
+async def exchange_token(
+    body:ExchangeBody, 
+    svc: PlaidService = Depends(get_plaid_service), 
+    current_user = Depends(get_current_user)):
     try:
         account_entities = [
             AccountBodyEntity(
@@ -69,7 +73,7 @@ async def exchange_token(body:ExchangeBody, svc: PlaidService = Depends(get_plai
         return await svc.exchange_public_token(
             public_token=body.public_token, 
             selected_accounts=account_entities,
-            user_id=body.user_id,
+            user_id=current_user.id,
             institution=body.institution,
             unselect_others=body.unselect_others,
         )

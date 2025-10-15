@@ -3,10 +3,12 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { GET_ALL_ACCOUNTS } from '@/lib/api_urls'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { useNotify } from '../notification/NotificationProvider'
 
 const UserContext = createContext(null)
 
 export const UserProvider = ({ children }) => {
+  const notify = useNotify()
   const { user, makeAuthRequest } = useAuth()
   const [accounts, setAccounts] = useState(null)
   const [_isLoading, _setIsLoading] = useState(false)
@@ -16,8 +18,7 @@ export const UserProvider = ({ children }) => {
     _setIsLoading(true)
 
     try {
-      const params = new URLSearchParams({ user_id: String(user.id) })
-      const data = await makeAuthRequest(`${GET_ALL_ACCOUNTS}?${params}`)
+      const data = await makeAuthRequest(`${GET_ALL_ACCOUNTS}`)
       setAccounts(data)
     } catch {
       notify({
@@ -29,7 +30,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       _setIsLoading(false)
     }
-  }, [user?.id, makeAuthRequest])
+  }, [user?.id, makeAuthRequest, notify])
 
   useEffect(() => {
     getAccounts()

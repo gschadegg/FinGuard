@@ -52,7 +52,6 @@ export default function PlaidTest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           public_token,
-          user_id: userId,
           selected_accounts,
           institution,
           unselect_others: unselectOthers,

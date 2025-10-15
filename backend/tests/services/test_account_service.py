@@ -199,7 +199,7 @@ async def test_get_account_by_id_base(monkeypatch):
     plaid.preloads[(77, tuple(["p-1"]))] = {"p-1": {"account_id": "p-1", "name": "PlaidName"}}
 
     svc = AccountService(account_repo=repo, connection_item_repo=connection, plaid=plaid)
-    out = await svc.get_account_by_id(account_id=10, plaid_account_id=None)
+    out = await svc.get_account_by_id(account_id=10, plaid_account_id=None, user_id=99)
 
     assert out.id == 10
     assert out.name == "DBName"
@@ -222,5 +222,30 @@ async def test_get_account_by_id_not_found(monkeypatch):
 
     svc = AccountService(account_repo=repo, connection_item_repo=connection, plaid=plaid)
     with pytest.raises(NotFoundError):
-        await svc.get_account_by_id(account_id=123, plaid_account_id=None)
+        await svc.get_account_by_id(account_id=123, plaid_account_id=None, user_id=1)
 
+
+# TC-ACCT-GET-003: Account exists but isn't owned by user making call
+@pytest.mark.anyio
+async def test_get_account_by_id_not_owned(monkeypatch):
+    repo = MockAccountRepo()
+    repo._one = map_to_account_entity(10, item_id=77, plaid_id="p-1", name="DB")
+
+    # mocking a connection item to user_id 42
+    connection = MockConnectionItemRepo()
+    connection.single_item = ConnectionItemEntity(
+        id=77, user_id=42, plaid_item_id="item-77",
+        access_token_encrypted="encrypted-token",
+        institution_id="institution3", institution_name="My Bank", accounts=[]
+    )
+
+    plaid = MockPlaidService()
+    svc = AccountService(account_repo=repo, connection_item_repo=connection, plaid=plaid)
+
+    # attempting access with user_id 99
+    with pytest.raises(NotFoundError):
+        await svc.get_account_by_id(account_id=10, plaid_account_id=None, user_id=99)
+
+    # ownership of account is called first so plaid service shouldnt be called
+    assert len(plaid.calls) == 0
+    assert connection.get_by_id_calls == 1

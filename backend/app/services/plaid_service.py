@@ -49,6 +49,10 @@ class PlaidService:
                 
                 if not item:
                     raise HTTPException(404, "Account connection not found")
+                
+                if item.user_id != user_id:
+                    raise HTTPException(status_code=404, detail="Account connection not found")
+
                 access_token = decrypt(item.access_token_encrypted)
 
 
@@ -144,7 +148,9 @@ class PlaidService:
             )
             item = await self.connection_item_repo.add(item)
         else:
-
+            if item.user_id != user_id:
+                raise HTTPException(status_code=404, detail="Account connection not found")
+            
             item = await self.connection_item_repo.update(item, token_encrypted, 
                                                           institution_id, institution_name)
             mode = "updated"
@@ -175,6 +181,7 @@ class PlaidService:
         access_token: Optional[str] = None,
         item_id: Optional[int] = None,
         account_ids: Optional[List[str]] = None,
+        user_id: Optional[int]=None
     ) -> Dict[str, dict]:
 
 
@@ -183,6 +190,9 @@ class PlaidService:
                 raise ValueError("Provide either Access Token or Connection ID")
             item = await self.connection_item_repo.get_by_id(item_id) 
             if not item:
+                return {}
+            
+            if user_id is not None and item.user_id != user_id:
                 return {}
             access_token = decrypt(item.access_token_encrypted)
 

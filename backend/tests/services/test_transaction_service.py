@@ -2,9 +2,10 @@ import pytest
 from types import SimpleNamespace
 from typing import Optional, List
 from datetime import date
+from fastapi import HTTPException
 
 from app.services.transaction_service import TransactionService
-from app.domain.entities import ConnectionItemEntity 
+from app.domain.entities import ConnectionItemEntity, AccountEntity
 
 
 class MockTransactionRepo:
@@ -68,7 +69,17 @@ class MockTransactionRepo:
 
 
 class MockAccountRepo:
-    pass
+    def __init__(self):
+        self._by_id: dict[int, AccountEntity] = {}
+
+    async def get_one(self, *, account_id=None, plaid_account_id=None):
+        if account_id is not None:
+            return self._by_id.get(account_id)
+        if plaid_account_id is not None:
+            for account in self._by_id.values():
+                if account.plaid_account_id == plaid_account_id:
+                    return account
+        return None
 
 
 class MockConnectionItemRepo:
@@ -151,7 +162,7 @@ async def test_sync_connection_item_base(svc):
         }
     ]
 
-    out = await svc.sync_connection_item(42)
+    out = await svc.sync_connection_item(42, user_id=7)
 
     assert out == {"ok": True, "added": 2, "modified": 1, "removed": 1}
     assert len(svc.transaction_repo.upsert_calls) == 3
@@ -174,7 +185,7 @@ async def test_sync_connection_item_multi_page(svc):
          "modified": [{"transaction_id": "t2", "account_id": "p2"}, {"transaction_id": "t3", "account_id": "p2"}], "removed": [], "next_cursor": "c2", "has_more": False},
     ]
 
-    out = await svc.sync_connection_item(99)
+    out = await svc.sync_connection_item(99, user_id=1)
 
     assert out == {"ok": True, "added": 1, "modified": 2, "removed": 0}
     assert len(svc.transaction_repo.upsert_calls) == 3
@@ -186,16 +197,31 @@ async def test_sync_connection_item_multi_page(svc):
 # TC-TX-ITEM-003: connection item not found
 @pytest.mark.anyio
 async def test_sync_connection_item_item_not_found(svc):
-    # no entry in _by_id
-    out = await svc.sync_connection_item(555)
+    resp = await svc.sync_connection_item(555, user_id=7)
 
-    assert out == {"ok": False, "reason": "Connection Item not found"}
+    assert resp == {"ok": False, "reason": "Connection Item not found"}
     assert svc.plaid.calls == []
     assert svc.transaction_repo.upsert_calls == []
     assert svc.transaction_repo.removed_ids == []
     assert svc.connection_item_repo.update_cursor_calls == []
 
 
+#TC-TX-ITEM-004: connection item found but not owned by current user
+@pytest.mark.anyio
+async def test_sync_connection_item_not_owned(svc):
+    # mock connection item with user_id 999
+    svc.connection_item_repo._by_id[77] = _item(item_id=77, user_id=999, cursor=None)
+
+    #requesting connection item and its sync with user_id 1
+    resp = await svc.sync_connection_item(77, user_id=1)
+
+    assert resp == {"ok": False, "reason": "Connection Item not found"}
+
+    # Shouldnt touch plaid or db
+    assert svc.plaid.calls == []
+    assert svc.transaction_repo.upsert_calls == []
+    assert svc.transaction_repo.removed_ids == []
+    assert svc.connection_item_repo.update_cursor_calls == []
 
 
 
@@ -209,11 +235,11 @@ async def test_sync_connection_item_item_not_found(svc):
 async def test_sync_user_base(monkeypatch, svc):
     svc.connection_item_repo.list_ids = [1, 2, 3]
 
-    async def _mock_sync_connection_item(item_id: int):
+    async def _mock_sync_connection_item(item_id: int, **kwargs):
         if item_id == 1:
             return {"ok": True, "added": 2, "modified": 1, "removed": 0}
         if item_id == 2:
-            return {"ok": False, "reason": "boom"}
+            return {"ok": False, "reason": "error"}
         return {"ok": True, "added": 0, "modified": 3, "removed": 1}
 
     monkeypatch.setattr(svc, "sync_connection_item", _mock_sync_connection_item)
@@ -269,11 +295,39 @@ async def test_list_account_get(svc):
     svc.transaction_repo.page_account = {
         "items": [{"id": 11}], "next_cursor": None, "has_more": False
     }
+
+    svc.account_repo._by_id[123] = AccountEntity(
+        id=123, item_id=55, plaid_account_id="plaid-account-1",
+        name=None, mask=None, type=None, subtype=None, selected=True,
+        institution_id=None, institution_name=None
+    )
+    svc.connection_item_repo._by_id[55] = _item(item_id=55, user_id=1, cursor=None)
+
     out = await svc.list_account(account_id=123, start=None, end=date(2025, 12, 31),
-                                 limit=25, cursor=None)
+                                 limit=25, cursor=None, user_id=1)
 
     assert out == {"items": [{"id": 11}], "next_cursor": None, "has_more": False}
     assert svc.transaction_repo.page_account["_last_args"] == {
         "account_id": 123, "start": None, "end": date(2025, 12, 31),
         "limit": 25, "cursor": None,
     }
+
+
+#TC-TX-LIST-003: account is found but not owned by current user
+@pytest.mark.anyio
+async def test_list_account_not_owned(svc):
+    svc.account_repo._by_id[123] = AccountEntity(
+        id=123, item_id=55, plaid_account_id="plaid-account-1",
+        name=None, mask=None, type=None, subtype=None, selected=True,
+        institution_id=None, institution_name=None
+    )
+    #mock connection item with user_id 999
+    svc.connection_item_repo._by_id[55] = _item(item_id=55, user_id=999, cursor=None)
+
+    # request account on connection item with user_id 1
+    with pytest.raises(HTTPException) as ei:
+        await svc.list_account(account_id=123, start=None, end=None, limit=50, cursor=None, user_id=1)
+
+    assert ei.value.status_code == 404
+    # pagination shouldnt have been call
+    assert "_last_args" not in svc.transaction_repo.page_account

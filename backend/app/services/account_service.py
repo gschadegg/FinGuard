@@ -45,12 +45,18 @@ class AccountService:
 
 
 
-    async def get_account_by_id(self, account_id, plaid_account_id) -> FullAccountEntity:
+    async def get_account_by_id(self, account_id, plaid_account_id, user_id) -> FullAccountEntity:
         account = await self.account_repo.get_one(account_id=account_id, 
                                                   plaid_account_id=plaid_account_id)
 
         if not account:
             raise NotFoundError("Account not found")
+        
+        item = await self.connection_repo.get_by_id(account.item_id)
+        if not item or item.user_id != user_id:
+            raise NotFoundError("Account not found")
+        
+        
         
         plaid_map = await self.plaid_svc.get_accounts(
             item_id=account.item_id, 
@@ -59,10 +65,6 @@ class AccountService:
         item = await self.connection_repo.get_by_id(account.item_id)
 
         return self._merge_plaid_data(account, plaid_map.get(account.plaid_account_id), item)
-
-
-
-
 
     def _merge_plaid_data(
         self, 

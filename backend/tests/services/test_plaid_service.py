@@ -191,6 +191,30 @@ async def test_create_link_token_update_not_found(mock_plaid_client):
     assert ei.value.status_code == 404
 
 
+# TC-PLAID-LINK-005: update mode but current user doesn't own connection item
+@pytest.mark.anyio
+async def test_create_link_token_update_not_owned(mock_plaid_client):
+    connectionItem_repo = MockConnectionItemRepo()
+
+    # mock connection item with user_id 42
+    existing = ConnectionItemEntity(
+        id=1, user_id=42, plaid_item_id="item-123",
+        access_token_encrypted="encrypted", institution_id=None, institution_name=None, accounts=[]
+    )
+    connectionItem_repo.items_by_plaid_id["item-123"] = existing
+
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=connectionItem_repo)
+
+    with pytest.raises(HTTPException) as ei:
+        await svc.create_link_token(user_id=123, mode="update", plaid_item_id="item-123")
+
+    assert ei.value.status_code == 404
+    # ownship check occurs first so plaid shouldnt be called
+    assert mock_plaid_client.link_token_create.call_count == 0
+
+
+
+
 ############################
 # exchange_public_token Tests
 ############################
@@ -397,6 +421,41 @@ async def test_exchange_public_token_plaid_400_used_token(mock_plaid_client, mon
     assert mock_plaid_client.item_public_token_exchange.call_count == 1
 
 
+# TC-PLAID-TOKEN-010: exchange_public_token but connection item isn't owned by current user
+@pytest.mark.anyio
+async def test_exchange_public_token_update_not_owned(mock_plaid_client):
+    mock_plaid_client.item_public_token_exchange.return_value = SimpleNamespace(
+        to_dict=lambda: {"access_token": "access_token-123", "item_id": "item-123"}
+    )
+
+    # mock connection item to user_id 999
+    existing = ConnectionItemEntity(
+        id=9, user_id=999, plaid_item_id="item-123",
+        access_token_encrypted="encrypted-old", institution_id=None, institution_name=None, accounts=[]
+    )
+    account_repo = MockAccountRepo()
+    connectionItem_repo = MockConnectionItemRepo()
+    connectionItem_repo.items_by_plaid_id["item-123"] = existing
+
+    svc = PlaidService(account_repo, connectionItem_repo)
+
+    # request made with user_id 1
+    with pytest.raises(HTTPException) as ei:
+        await svc.exchange_public_token(
+            public_token="public_token",
+            user_id=1,
+            selected_accounts=[{"id": "account_1"}],
+            institution=institution_helper("institution2", "Bank Name"),
+            unselect_others=False,
+        )
+
+    assert ei.value.status_code == 404
+    # shouldn't be hitting db repo
+    assert connectionItem_repo.update_calls == 0
+    assert connectionItem_repo.add_calls == 0
+    assert len(account_repo.calls) == 0
+
+
 
 ############################
 # get_accounts Tests
@@ -498,6 +557,26 @@ async def test_get_accounts_plaid_error(mock_plaid_client, mock_plaid_models, mo
 
     out = await svc.get_accounts(access_token="token-123", account_ids=["account_1"])
     assert out == {}
+
+
+# TC-PLAID-ACCTS-007: get_accounts with item_id but account isn't owned by current user
+@pytest.mark.anyio
+async def test_get_accounts_by_item_id_not_owned(mock_plaid_client, mock_plaid_models):
+    repo = MockConnectionItemRepo()
+
+    # mock connection item to user_id 999
+    repo.single_item = ConnectionItemEntity(
+        id=77, user_id=999, plaid_item_id="item-abc",
+        access_token_encrypted="ENCRYPTED-XYZ",
+        institution_id="ins_3", institution_name="Chase", accounts=[]
+    )
+    svc = PlaidService(account_repo=MockAccountRepo(), connection_item_repo=repo)
+
+    # requesting account with user_id 1
+    resp = await svc.get_accounts(item_id=77, account_ids=["account_1"], user_id=1)
+
+    assert resp == {}
+    assert mock_plaid_client.accounts_get.call_count == 0
 
 
 

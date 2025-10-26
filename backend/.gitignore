@@ -136,9 +136,11 @@ celerybeat.pid
 
 # Environments
 .env
+
 .env.*
 .envrc
 .venv
+.venv-ml
 env/
 venv/
 ENV/
@@ -206,3 +208,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+synthetic_plaid_transactions.csv

@@ -7,6 +7,7 @@ personal finance management with real time fraud detection
 To setup the
 
 - Clone monolith repository from Github
+- Install [pnpm](https://pnpm.io/installation)
 - Go to the Frontend doc and complete it's [setup instructions](./frontend/README.md#setup)
 - Go to the Backend doc and complete it's [setup instructions](./backend/README.md#setup). This will setup the Backend service layer as well as the local database.
 

@@ -4,6 +4,7 @@ export const HOME = ROOT
 // export const USERS = `${ROOT}/users`
 export const ACCOUNTS = `${ROOT}/accounts`
 export const PLAID_BASE = `${ROOT}/plaid`
+export const BUDGET_BASE = `${ROOT}/budgets`
 
 export const USER_REGISTER_URL = `${ROOT}/auth/register`
 export const USER_LOGIN_URL = `${ROOT}/auth/login`
@@ -19,6 +20,15 @@ export const GET_TRANSACTIONS_BY_ACCOUNT_ID = (accountId, params) =>
   withQuery(`${ROOT}/transactions/accounts/${encodeURIComponent(accountId)}`, params)
 
 export const GET_TRANSACTIONS_BY_USER_ID = (params) => withQuery(`${ROOT}/transactions`, params)
+
+export const GET_BUDGET_CATEGORIES = `${BUDGET_BASE}/categories`
+export const CREATE_BUDGET_CATEGORY = `${BUDGET_BASE}/categories`
+
+export const UPDATE_BUDGET_CATEGORY = (categoryId) =>
+  `${BUDGET_BASE}/categories/${encodeURIComponent(categoryId)}`
+
+export const DELETE_BUDGET_CATEGORY = (categoryId) =>
+  `${BUDGET_BASE}/categories/${encodeURIComponent(categoryId)}`
 
 const withQuery = (url, params) => {
   if (!params) return url

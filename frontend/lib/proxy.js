@@ -40,7 +40,7 @@ export async function normalizeToJson(upstream) {
 }
 
 async function readBody(req) {
-  if (req.method === 'GET' || req.method === 'HEAD') return undefined
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'DELETE') return undefined
   const ct = (req.headers.get('content-type') || '').toLowerCase()
   if (!ct) return undefined
   if (ct.includes('application/json')) return JSON.stringify(await req.json()) || {}

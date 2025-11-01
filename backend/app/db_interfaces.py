@@ -1,7 +1,8 @@
 from datetime import date
 from typing import Iterable, Optional, Protocol, Sequence, Union
+from decimal import Decimal
 
-from app.domain.entities import AccountEntity, ConnectionItemEntity, UserEntity
+from app.domain.entities import AccountEntity, ConnectionItemEntity, UserEntity, BudgetCategoryEntity
 from infrastructure.db.models import User
 
 # DB Repositories Interfaces
@@ -80,3 +81,12 @@ class TransactionRepo(Protocol):
             cursor: str | None
     ) -> dict: ...
 
+
+
+class BudgetCategoryRepo(Protocol):
+    async def get_by_name(self, user_id: int, name: str) -> BudgetCategoryEntity | None: ...
+    async def list_by_user(self, user_id: int) -> list[BudgetCategoryEntity]: ...
+    async def create(self, user_id: int, name: str, allotted_amount) -> BudgetCategoryEntity: ...
+    async def update(self, user_id: int, category_id: int, patch: dict) -> BudgetCategoryEntity: ...
+    async def delete(self, user_id: int, category_id: int) -> None: ...
+    

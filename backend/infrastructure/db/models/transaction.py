@@ -46,3 +46,7 @@ class Transaction(Base):
     removed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    budget_category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("budget_categories.id", ondelete="SET NULL"), index=True, nullable=True
+    )

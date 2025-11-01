@@ -10,7 +10,7 @@ import { useNotify } from '@/components/notification/NotificationProvider'
 import { useState } from 'react'
 
 import { Loader } from 'lucide-react'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
@@ -166,18 +166,22 @@ export const columns = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             {/* NEED THIS TO CHANGE BASED ON RISK LEVEL ONCE ADDED */}
             {is_fraud_suspected ? (
-              <DropdownMenuItem onClick={() => {}}>Mark as Safe</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => {}}>
+                Mark as Safe
+              </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => {}}>Mark as Fraudulent</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => {}}>
+                Mark as Fraudulent
+              </DropdownMenuItem>
             )}
             {/* <DropdownMenuSeparator />
             <DropdownMenuItem>Other Option</DropdownMenuItem> */}

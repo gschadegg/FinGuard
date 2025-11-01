@@ -10,6 +10,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import useCursor from '@/hooks/useCursor'
 import { RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { DollarSign, ShieldAlert, Loader } from 'lucide-react'
 
 const STALE_DATA = 5 * 60 * 1000
 
@@ -70,6 +71,26 @@ export default function AccountsPage() {
     [userId, start, end, selected, refreshTrigger]
   )
 
+  const cardData = useMemo(() => {
+    return [
+      {
+        title: 'Total Balance',
+        detail: '$1,250.00',
+        icon: DollarSign,
+      },
+      {
+        title: 'Pending Transations',
+        detail: '-$1,250.00',
+        icon: Loader,
+      },
+      {
+        title: 'Potential Risks',
+        detail: '6',
+        icon: ShieldAlert,
+      },
+    ]
+  }, [])
+
   const pager = useCursor(fetchTransactions, 50, staticArgs)
 
   const handleManualRefresh = useCallback(() => {
@@ -82,7 +103,7 @@ export default function AccountsPage() {
 
   return (
     <PageLayout pageTitle="All Accounts">
-      <RollupCardRow />
+      <RollupCardRow cardData={cardData} />
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl text-gray-500 font-semibold tracking-tight mb-4">Transactions</h2>
         <Button

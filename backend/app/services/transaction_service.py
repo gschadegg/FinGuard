@@ -107,7 +107,12 @@ class TransactionService:
             account_id, start, end, limit=limit, cursor=cursor)
     
 
-    async def assign_category(self, user_id: int, transaction_id: int, category_id: int | None) -> dict:
+    async def assign_category(
+            self, 
+            user_id: int, 
+            transaction_id: int, 
+            category_id: int | None
+        ) -> dict:
         txn = await self.transaction_repo.get_owned(user_id, transaction_id)
         if not txn:
             raise HTTPException(status_code=404, detail="Transaction not found")
@@ -117,6 +122,10 @@ class TransactionService:
             if not cat:
                 raise HTTPException(status_code=404, detail="Category not found")
 
-        updated = await self.transaction_repo.set_transaction_category(user_id, transaction_id, category_id)
+        updated = await self.transaction_repo.set_transaction_category(
+            user_id, 
+            transaction_id, 
+            category_id
+        )
 
         return {"ok": updated}

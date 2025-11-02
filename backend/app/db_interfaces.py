@@ -5,8 +5,8 @@ from app.domain.entities import (
     AccountEntity,
     BudgetCategoryEntity,
     ConnectionItemEntity,
+    TransactionEntity,
     UserEntity,
-    TransactionEntity
 )
 from infrastructure.db.models import User
 

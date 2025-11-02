@@ -5,7 +5,7 @@ from datetime import date
 from fastapi import HTTPException
 
 from app.services.transaction_service import TransactionService
-from app.domain.entities import ConnectionItemEntity, AccountEntity
+from app.domain.entities import ConnectionItemEntity, AccountEntity, BudgetCategoryEntity
 
 
 class MockTransactionRepo:
@@ -98,6 +98,10 @@ class MockConnectionItemRepo:
         self.update_cursor_calls.append((item_id, cursor))
 
 
+class MockBudgetCategoryRepo:
+    def __init__(self):
+        self._by_id: dict[int, BudgetCategoryEntity] = {}
+
 class MockPlaidService:
     def __init__(self):
         self.calls: list[tuple[str, Optional[str]]] = []   #this will be the  (access_token, cursor) passed
@@ -110,6 +114,7 @@ class MockPlaidService:
         return {"added": [], "modified": [], "removed": [], "next_cursor": cursor, "has_more": False}
 
 
+
 @pytest.fixture
 def svc(monkeypatch):
     monkeypatch.setattr("app.services.transaction_service.decrypt", lambda s: "decrypted-access-token")
@@ -117,10 +122,11 @@ def svc(monkeypatch):
     transaction_repo = MockTransactionRepo()
     account_repo = MockAccountRepo()
     connection_item_repo = MockConnectionItemRepo()
+    budget_category_repo = MockBudgetCategoryRepo()
     plaid = MockPlaidService()
 
     svc = TransactionService(transaction_repo=transaction_repo, account_repo=account_repo,
-                             connection_item_repo=connection_item_repo, plaid=plaid)
+                             connection_item_repo=connection_item_repo, plaid=plaid, budget_category_repo=budget_category_repo)
 
 
     svc.transaction_repo = transaction_repo

@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -106,6 +107,7 @@ class TransactionEntity(BaseModel):
     is_fraud_suspected: bool = False
 
     removed: bool = False
+    budget_category_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,3 +116,14 @@ class TransactionsPageEntity(BaseModel):
     items: list[TransactionEntity]
     next_cursor: str | None = None
     has_more: bool = False
+
+
+class BudgetCategoryEntity(BaseModel):
+    id: int
+    name: str
+    allotted_amount: Decimal
+    group: str
+    created_at: datetime
+    updated_at: datetime | None
+
+    model_config = dict(from_attributes=True)

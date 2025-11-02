@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException
 
-from app.db_interfaces import AccountRepo, ConnectionItemRepo, TransactionRepo
+from app.db_interfaces import AccountRepo, BudgetCategoryRepo, ConnectionItemRepo, TransactionRepo
 from app.domain.entities import TransactionsPageEntity
 from app.security.crypto import decrypt
 from app.services.plaid_service import PlaidService
@@ -11,11 +11,14 @@ from app.services.plaid_service import PlaidService
 class TransactionService:
     def __init__(self, transaction_repo: TransactionRepo, 
                  account_repo: AccountRepo, connection_item_repo: ConnectionItemRepo, 
-                 plaid: PlaidService):
+                 plaid: PlaidService,
+                 budget_category_repo: BudgetCategoryRepo
+                ):
         self.transaction_repo = transaction_repo
         self.account_repo = account_repo
         self.connection_item_repo = connection_item_repo
         self.plaid = plaid
+        self.budget_category_repo = budget_category_repo
 
 
     async def sync_connection_item(self, item_id: int, user_id: int) -> dict:

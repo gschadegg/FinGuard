@@ -26,6 +26,16 @@ function renderWithProviders(ui) {
   return render(ui, { wrapper: ({ children }) => <TestProviders>{children}</TestProviders> })
 }
 
+jest.mock('./../components/auth/AuthProvider', () => ({
+  useAuth: () => ({
+    makeAuthRequest: jest.fn().mockResolvedValue({
+      ok: true,
+      categories: [],
+      total_budgeted: 0,
+    }),
+  }),
+}))
+
 //TC-TABLE-DISPLAY-001: BASE scenario, table renders rows with data
 test('Table renders with data rows', () => {
   const rows = [

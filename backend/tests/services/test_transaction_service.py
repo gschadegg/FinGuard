@@ -17,6 +17,11 @@ class MockTransactionRepo:
         self.page_user = {"items": [], "next_cursor": None, "has_more": False}
         self.page_account = {"items": [], "next_cursor": None, "has_more": False}
 
+        self._tx_by_id: dict[int, dict] = {}
+        self.set_category_calls: list[tuple[int, int | None]] = [] 
+
+    def _createTransaction(self, *, txn_id: int, user_id: int, category_id: int | None):
+        self._tx_by_id[txn_id] = {"id": txn_id, "user_id": user_id, "category_id": category_id}
 
     async def upsert_from_plaid(self, item: ConnectionItemEntity, transaction: dict) -> int:
         self.upsert_calls.append((item, transaction))
@@ -66,6 +71,28 @@ class MockTransactionRepo:
             cursor=cursor
         )
         return {key: val for key, val in self.page_account.items() if key != "_last_args"}
+    
+
+
+    async def get_owned(self, user_id: int, transaction_id: int):
+        tx = self._tx_by_id.get(transaction_id)
+
+        if tx and tx["user_id"] == user_id:
+            return tx
+        
+        return None
+
+
+    async def set_transaction_category(self, user_id: int, transaction_id: int, category_id: int | None) -> bool:
+        tx = self._tx_by_id.get(transaction_id)
+
+        if not tx or tx["user_id"] != user_id:
+            return False
+        
+        tx["category_id"] = category_id
+        self.set_category_calls.append((transaction_id, category_id))
+
+        return True
 
 
 class MockAccountRepo:
@@ -101,6 +128,19 @@ class MockConnectionItemRepo:
 class MockBudgetCategoryRepo:
     def __init__(self):
         self._by_id: dict[int, BudgetCategoryEntity] = {}
+        self._owned: dict[int, dict] = {}
+
+    def _createCategory(self, *, category_id: int, user_id: int):
+        self._owned[category_id] = {"id": category_id, "user_id": user_id}
+
+    async def get_owned(self, user_id: int, category_id: int):
+        category = self._owned.get(category_id)
+
+        if category and category["user_id"] == user_id:
+            return category
+        
+        return None
+
 
 class MockPlaidService:
     def __init__(self):
@@ -337,3 +377,84 @@ async def test_list_account_not_owned(svc):
     assert ei.value.status_code == 404
     # pagination shouldnt have been call
     assert "_last_args" not in svc.transaction_repo.page_account
+
+
+
+
+
+############################
+# assign_category Tests
+############################
+
+# TC-TX-CAT-001: base scenario, assign an owned transaction to an owned category
+@pytest.mark.anyio
+async def test_assign_category_base(svc):
+    svc.transaction_repo._createTransaction(txn_id=101, user_id=7, category_id=None)
+    svc.budget_category_repo._createCategory(category_id=55, user_id=7)
+
+    out = await svc.assign_category(user_id=7, transaction_id=101, category_id=55)
+
+    assert out == {"ok": True}
+
+    assert svc.transaction_repo._tx_by_id[101]["category_id"] == 55
+    assert svc.transaction_repo.set_category_calls == [(101, 55)]
+
+
+# TC-TX-CAT-002: set category to unassigned
+@pytest.mark.anyio
+async def test_assign_category_unassigned(svc):
+    svc.transaction_repo._createTransaction(txn_id=202, user_id=7, category_id=10)
+
+    out = await svc.assign_category(user_id=7, transaction_id=202, category_id=None)
+
+    assert out == {"ok": True}
+    assert svc.transaction_repo._tx_by_id[202]["category_id"] is None
+    assert svc.transaction_repo.set_category_calls[-1] == (202, None)
+
+
+# TC-TX-CAT-003: transaction not found
+@pytest.mark.anyio
+async def test_assign_category_txn_not_found(svc):
+    with pytest.raises(HTTPException) as exception:
+        await svc.assign_category(user_id=7, transaction_id=999, category_id=55)
+
+    assert exception.value.status_code == 404
+    assert "Transaction not found" in exception.value.detail
+
+    # shouldnt have called the set category function
+    assert svc.transaction_repo.set_category_calls == []
+
+
+
+# TC-TX-CAT-004: category isn't owned by user
+@pytest.mark.anyio
+async def test_assign_category_category_not_owned(svc):
+    svc.transaction_repo._createTransaction(txn_id=303, user_id=7, category_id=None)
+
+    svc.budget_category_repo._createCategory(category_id=77, user_id=8)
+
+    with pytest.raises(HTTPException) as exception:
+        await svc.assign_category(user_id=7, transaction_id=303, category_id=77)
+
+    assert exception.value.status_code == 404
+    assert "Category not found" in exception.value.detail
+
+    # shouldnt have called the set category function
+    assert svc.transaction_repo.set_category_calls == []
+
+
+
+# TC-TX-CAT-005: change category assigned to different category
+@pytest.mark.anyio
+async def test_assign_category_reassign(svc):
+    svc.transaction_repo._createTransaction(txn_id=404, user_id=7, category_id=11)
+    svc.budget_category_repo._createCategory(category_id=11, user_id=7)
+    svc.budget_category_repo._createCategory(category_id=12, user_id=7)
+
+    out1 = await svc.assign_category(user_id=7, transaction_id=404, category_id=12)
+
+    out2 = await svc.assign_category(user_id=7, transaction_id=404, category_id=None)
+    out3 = await svc.assign_category(user_id=7, transaction_id=404, category_id=11)
+
+    assert out1 == {"ok": True} and out2 == {"ok": True} and out3 == {"ok": True}
+    assert svc.transaction_repo._tx_by_id[404]["category_id"] == 11

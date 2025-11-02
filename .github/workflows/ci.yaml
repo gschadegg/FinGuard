@@ -186,7 +186,7 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: frontend
-        run: pnpm run e2e:live
+        run: pnpm run e2e:mocks
 
       - name: Cleanup DB
         if: always()

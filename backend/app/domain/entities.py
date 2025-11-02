@@ -1,8 +1,9 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from decimal import Decimal
+
 # Domain Models for service layer use
 
 # User Class

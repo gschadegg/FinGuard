@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException
 
-from app.db_interfaces import AccountRepo, ConnectionItemRepo, TransactionRepo, BudgetCategoryRepo
+from app.db_interfaces import AccountRepo, BudgetCategoryRepo, ConnectionItemRepo, TransactionRepo
 from app.domain.entities import TransactionsPageEntity
 from app.security.crypto import decrypt
 from app.services.plaid_service import PlaidService

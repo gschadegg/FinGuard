@@ -5,16 +5,15 @@ from app.auth_settings import AuthSettings, get_auth_settings
 from app.config import get_settings
 from app.services.account_service import AccountService
 from app.services.auth_service import AuthService
+from app.services.budget_service import BudgetService
 from app.services.plaid_service import PlaidService
 from app.services.transaction_service import TransactionService
 from app.services.user_service import UserService
-from app.services.budget_service import BudgetService
 from infrastructure.db.repos.account_repo import SqlAccountRepo
+from infrastructure.db.repos.budget_category_repo import SqlBudgetCategoryRepo
 from infrastructure.db.repos.connectionItem_repo import SqlConnectionItemRepo
 from infrastructure.db.repos.transaction_repo import SqlTransactionRepo
 from infrastructure.db.repos.user_repo import SqlUserRepo
-from infrastructure.db.repos.budget_category_repo import SqlBudgetCategoryRepo
-
 from infrastructure.db.session import get_db
 
 settings = get_settings()

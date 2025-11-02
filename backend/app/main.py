@@ -5,10 +5,10 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1.accounts import router as accounts_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.budget import router as budget_router
 from app.api.v1.plaid import router as plaid_router
 from app.api.v1.transactions import router as transaction_router
 from app.api.v1.users import router as users_router
-from app.api.v1.budget import router as budget_router
 from infrastructure.db.session import lifespan
 
 app = FastAPI(lifespan=lifespan)

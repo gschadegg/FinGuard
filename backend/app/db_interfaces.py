@@ -1,8 +1,12 @@
 from datetime import date
 from typing import Iterable, Optional, Protocol, Sequence, Union
-from decimal import Decimal
 
-from app.domain.entities import AccountEntity, ConnectionItemEntity, UserEntity, BudgetCategoryEntity
+from app.domain.entities import (
+    AccountEntity,
+    BudgetCategoryEntity,
+    ConnectionItemEntity,
+    UserEntity,
+)
 from infrastructure.db.models import User
 
 # DB Repositories Interfaces

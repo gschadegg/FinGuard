@@ -1,5 +1,7 @@
 from decimal import Decimal
+
 from fastapi import HTTPException
+
 from app.db_interfaces import BudgetCategoryRepo
 
 ALLOWED_GROUPS = {"Expenses", "Entertainment", "Savings"}
@@ -39,7 +41,8 @@ class BudgetService:
                 raise HTTPException(409, "Category with that name already exists.")
             
         patch = {}
-        if name is not None: patch["name"] = name
+        if name is not None: 
+            patch["name"] = name
 
         if allotted_amount is not None: 
             patch["allotted_amount"] = allotted_amount

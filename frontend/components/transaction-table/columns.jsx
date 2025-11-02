@@ -23,6 +23,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+import { useAuth } from '@/components/auth/AuthProvider'
+
+import { ASSIGN_BUDGET_CATEGORY } from '@/lib/api_urls'
+
 export const columns = [
   {
     accessorKey: 'merchant_name',
@@ -53,33 +57,58 @@ export const columns = [
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const notify = useNotify()
       // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { makeAuthRequest } = useAuth()
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const [saving, setSaving] = useState(false)
-      const category = row.original.category
-      const _category_id = row.original.category_id
+
+      const _txn_id = row.original.id
 
       const options = table.options.meta.options.category
-      const current = category ?? ''
+      const currentId = String(row.original.budget_category_id ?? '')
+      const currentLabel = row.original.budget_category_name ?? 'Unassigned'
 
       async function onChange(nextVal) {
-        if (nextVal === current) return
+        if (nextVal === currentId) return
         const rowIndex = row.index
-
-        table.options.meta.updateRow(rowIndex, { category: nextVal })
+        const nextLabel =
+          options.find((o) => String(o.value) === String(nextVal))?.label ?? currentLabel
+        table.options.meta.updateRow(rowIndex, {
+          category_id: nextVal === '' ? null : Number(nextVal),
+          category: nextLabel,
+        })
         setSaving(true)
 
         try {
-          // SEND UPDATE REQUEST HERE
-          notify({
-            type: 'success',
-            title: 'Category Updated',
-            message: 'Category for transaction has been updated.',
+          const res = await makeAuthRequest(ASSIGN_BUDGET_CATEGORY(_txn_id), {
+            method: 'PUT',
+            body: JSON.stringify({ category_id: nextVal === 'null' ? null : Number(nextVal) }),
           })
+          if (res?.ok) {
+            table.options.meta.updateRow(rowIndex, {
+              category_id: currentId === 'null' ? null : Number(currentId),
+              category: currentLabel,
+            })
+            notify({
+              type: 'success',
+              title: 'Category Assigned',
+              message: 'Category has been assigned to transaction.',
+            })
+          } else {
+            notify({
+              type: 'error',
+              title: 'Error Assigning Category',
+              message: 'There was an issue assigning a category, please try again',
+            })
+          }
         } catch (_) {
-          table.options.meta.updateRow(rowIndex, { category: current })
+          table.options.meta.updateRow(rowIndex, {
+            category_id: currentId === 'null' ? null : Number(currentId),
+            category: currentLabel,
+          })
           notify({
             type: 'error',
-            title: 'Error Updating',
-            message: 'There was an issue updating category, please try again',
+            title: 'Error Assigning Category',
+            message: 'There was an issue assigning a category, please try again',
           })
         } finally {
           setSaving(false)
@@ -88,7 +117,7 @@ export const columns = [
 
       return (
         <div className="flex items-center gap-2">
-          <Select defaultValue={current ?? 'pending'} onValueChange={onChange} disabled={saving}>
+          <Select defaultValue={currentId ?? 'pending'} onValueChange={onChange} disabled={saving}>
             <SelectTrigger className="h-8 w-[140px]">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>

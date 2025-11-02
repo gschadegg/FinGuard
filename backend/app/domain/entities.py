@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from decimal import Decimal
@@ -107,6 +107,7 @@ class TransactionEntity(BaseModel):
 
     removed: bool = False
     budget_category_id: int | None = None
+    budget_category_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

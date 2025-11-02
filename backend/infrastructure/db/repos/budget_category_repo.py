@@ -81,6 +81,11 @@ class SqlBudgetCategoryRepo:
 
 
     async def delete(self, user_id: int, category_id: int) -> None:
+        await self.session.execute(
+            update(Transaction)
+            .where(Transaction.user_id == user_id, Transaction.budget_category_id == category_id)
+            .values(budget_category_id=None)
+        )
 
         await self.session.execute(
             delete(BudgetCategory).where(BudgetCategory.id == category_id, BudgetCategory.user_id == user_id)
@@ -89,3 +94,12 @@ class SqlBudgetCategoryRepo:
         await self.session.flush()
         await self.session.commit()
 
+
+
+    async def get_owned(self, user_id: int, category_id: int) -> BudgetCategoryEntity | None:
+
+        row = (await self.session.execute(
+            select(BudgetCategory).where(BudgetCategory.id == category_id, BudgetCategory.user_id == user_id)
+        )).scalar_one_or_none()
+
+        return _to_entity(row) if row else None

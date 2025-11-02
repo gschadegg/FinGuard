@@ -18,17 +18,49 @@ import {
 import { DataTablePagination } from './pagination'
 import TableSkeleton from './skeleton'
 
+import { useAuth } from '@/components/auth/AuthProvider'
+import { GET_BUDGET_CATEGORIES } from '@/lib/api_urls'
+import { useNotify } from '@/components/notification/NotificationProvider'
+
 export function TransactionDataTable({ columns, pager }) {
-  const [categoryOptions, _setCategoryOptions] = useState([
-    { value: 'unassigned', label: 'Unassigned' },
-    { value: 'groceries', label: 'Groceries' },
-    { value: 'insurance', label: 'Insurance' },
-    { value: 'rent', label: 'Rent' },
-  ])
+  const { makeAuthRequest } = useAuth()
+  const notify = useNotify()
+  const [categoryOptions, setCategoryOptions] = useState([{ value: 'null', label: 'Unassigned' }])
 
   useEffect(() => {
-    // FETCH AND SET CATEGORY OPTIONS
-  }, [])
+    let cancelled = false
+    const fetchCategories = async () => {
+      try {
+        const res = await makeAuthRequest(GET_BUDGET_CATEGORIES)
+        if (res?.ok) {
+          const { categories = [] } = res
+          if (categories.length > 0) {
+            if (!cancelled) {
+              setCategoryOptions([
+                { value: 'null', label: 'Unassigned' },
+                ...categories.map((c) => ({
+                  value: String(c.id),
+                  label: c.name,
+                })),
+              ])
+            }
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          notify({
+            type: 'error',
+            title: 'Budget Error',
+            message: 'Experienced issues fetching budget categories, please try again.',
+          })
+        }
+      }
+    }
+    fetchCategories()
+    return () => {
+      cancelled = true
+    }
+  }, [makeAuthRequest, notify])
 
   const table = useReactTable({
     data: pager.rows ?? [],
@@ -37,9 +69,7 @@ export function TransactionDataTable({ columns, pager }) {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     meta: {
-      updateRow: (rowIndex, updates) => {
-        setData((old) => old.map((r, i) => (i === rowIndex ? { ...r, ...updates } : r)))
-      },
+      updateRow: (rowIndex, updates) => pager.updateRow(rowIndex, updates),
       options: { category: categoryOptions },
     },
     manualPagination: true,

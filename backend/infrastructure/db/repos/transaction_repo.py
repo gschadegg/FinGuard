@@ -1,5 +1,6 @@
 from sqlalchemy import select, update, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from datetime import date
 from decimal import Decimal
 
@@ -10,12 +11,25 @@ from app.domain.entities import TransactionEntity, ConnectionItemEntity
 from app.utils.cursor import encode_cursor, decode_cursor
 from sqlalchemy.dialects.postgresql import insert
 
+from sqlalchemy import inspect as sa_inspect
 
 PAGE_DEFAULT = 50
 PAGE_MAX = 200
 
+
+def _row_to_columns_dict(row: Transaction) -> dict:
+    mapper = sa_inspect(Transaction).mapper
+    cols = [c.key for c in mapper.column_attrs]
+    return {k: getattr(row, k) for k in cols}
+
 def _to_entity(row: Transaction) -> TransactionEntity:
-    return TransactionEntity.model_validate(row, from_attributes=True)
+    base = _row_to_columns_dict(row)
+    entity = TransactionEntity.model_validate(base)
+    if row.budget_category:
+        entity.budget_category_name = row.budget_category.name
+    return entity
+
+
 
 class SqlTransactionRepo:
     def __init__(self, session: AsyncSession):
@@ -96,7 +110,7 @@ class SqlTransactionRepo:
         if selected_only:
             transactions = transactions.join(Account, Account.id == Transaction.account_id).where(Account.selected.is_(True))
 
-        transactions = transactions.order_by(Transaction.date.desc(), Transaction.id.desc())
+        transactions = transactions.options(joinedload(Transaction.budget_category)).order_by(Transaction.date.desc(), Transaction.id.desc())
 
         if cursor:
             cursor_date, cursor_id = decode_cursor(cursor)
@@ -152,6 +166,32 @@ class SqlTransactionRepo:
         return {"items": [_to_entity(r) for r in items], "next_cursor": next_cursor, "has_more": has_more}
 
 
+    async def get_owned(self, user_id: int, transaction_id: int) -> TransactionEntity | None:
+        row = (await self.session.execute(
+            select(Transaction).where(
+                Transaction.id == transaction_id,
+                Transaction.user_id == user_id,
+                Transaction.removed.is_(False),
+            )
+        )).scalar_one_or_none()
+        return _to_entity(row) if row else None
+
+
+    async def set_transaction_category(self, user_id: int, transaction_id: int, category_id: int | None) -> bool:
+        res = await self.session.execute(
+            update(Transaction)
+            .where(
+                Transaction.id == transaction_id,
+                Transaction.user_id == user_id,
+                Transaction.removed.is_(False),
+            )
+            .values(budget_category_id=category_id)
+            .returning(Transaction.id)
+        )
+        updated_id = res.scalar_one_or_none()
+        await self.session.commit() 
+
+        return updated_id is not None
 
 
 

@@ -34,7 +34,11 @@ export default function BudgetCategoryCard({
   const overspent = spent > budget
 
   return (
-    <Card className="overflow-hidden py-0 mb-2">
+    <Card
+      className="overflow-hidden py-0 mb-2"
+      data-testid={`category-card-${categoryId}`}
+      data-name={name}
+    >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1 mr-12">

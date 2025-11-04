@@ -5,6 +5,7 @@ from app.domain.entities import (
     AccountEntity,
     BudgetCategoryEntity,
     ConnectionItemEntity,
+    TransactionEntity,
     UserEntity,
 )
 from infrastructure.db.models import User
@@ -84,7 +85,17 @@ class TransactionRepo(Protocol):
             limit: int, 
             cursor: str | None
     ) -> dict: ...
-
+    async def set_transaction_category(
+            self, 
+            user_id: int, 
+            transaction_id: int, 
+            category_id: int | None
+        ) -> None: ...
+    async def get_owned(
+            self, 
+            user_id: int, 
+            transaction_id: int
+        ) -> TransactionEntity | None: ...
 
 
 class BudgetCategoryRepo(Protocol):
@@ -93,4 +104,5 @@ class BudgetCategoryRepo(Protocol):
     async def create(self, user_id: int, name: str, allotted_amount) -> BudgetCategoryEntity: ...
     async def update(self, user_id: int, category_id: int, patch: dict) -> BudgetCategoryEntity: ...
     async def delete(self, user_id: int, category_id: int) -> None: ...
+    async def get_owned(self, user_id: int, category_id: int) -> BudgetCategoryEntity | None: ...
     

@@ -10,7 +10,7 @@ export async function loginViaApiAndLocalStorage(
   baseURL,
   {
     email = process.env.E2E_EMAIL || 'a@b.com',
-    password = process.env.E2E_PASSWORD || 'secretpassword',
+    password = process.env.E2E_PASSWORD || 'DevPass1!',
   } = {}
 ) {
   const res = await page.request.post(`${baseURL}/api/auth/login`, { data: { email, password } })
@@ -33,7 +33,7 @@ export async function loginAndSaveStorageState(
   outFile,
   {
     email = process.env.E2E_EMAIL || 'a@b.com',
-    password = process.env.E2E_PASSWORD || 'secretpassword',
+    password = process.env.E2E_PASSWORD || 'DevPass1!',
   } = {}
 ) {
   const api = await request.newContext()

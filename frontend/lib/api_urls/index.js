@@ -30,6 +30,9 @@ export const UPDATE_BUDGET_CATEGORY = (categoryId) =>
 export const DELETE_BUDGET_CATEGORY = (categoryId) =>
   `${BUDGET_BASE}/categories/${encodeURIComponent(categoryId)}`
 
+export const ASSIGN_BUDGET_CATEGORY = (transactionId) =>
+  `${ROOT}/transactions/${encodeURIComponent(transactionId)}/category`
+
 const withQuery = (url, params) => {
   if (!params) return url
   const query = new URLSearchParams(params).toString()

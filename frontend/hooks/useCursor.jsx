@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 export default function useCursor(fetchPage, initialPageSize = 50, staticArgs = {}) {
   const [pageIndex, setPageIndex] = useState(0)
@@ -64,6 +64,18 @@ export default function useCursor(fetchPage, initialPageSize = 50, staticArgs = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, pageSize, cursor, fetchPage, staticKey, hasPage])
 
+  const updateRow = useCallback(
+    (rowIndex, update) => {
+      setPages((prev) => {
+        const page = prev[pageIndex]
+        if (!page) return prev
+        const nextRows = page.rows.map((r, i) => (i === rowIndex ? { ...r, ...update } : r))
+        return { ...prev, [pageIndex]: { ...page, rows: nextRows } }
+      })
+    },
+    [pageIndex]
+  )
+
   return {
     pageIndex,
     pageSize,
@@ -73,6 +85,7 @@ export default function useCursor(fetchPage, initialPageSize = 50, staticArgs = 
     hasMore,
     setPageIndex,
     setPageSize,
+    updateRow,
     pageCount: hasMore ? pageIndex + 2 : pageIndex + 1,
   }
 }

@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.domain.entities import (
     TransactionsPageEntity,
@@ -9,6 +10,10 @@ from app.domain.entities import (
 from app.security.auth import get_current_user
 from app.services.transaction_service import TransactionService
 from app.services_container import get_transaction_service
+
+
+class AssignCategoryBody(BaseModel):
+    category_id: Optional[int] = None
 
 router = APIRouter(
     prefix="/transactions", 
@@ -83,4 +88,18 @@ async def list_account_transactions(
         user_id=current_user.id, 
         limit=limit, 
         cursor=cursor
+    )
+
+
+@router.put("/{transaction_id}/category")
+async def assign_transaction_category(
+    transaction_id: int,
+    body: AssignCategoryBody,
+    svc: TransactionService = Depends(get_transaction_service),
+    current_user = Depends(get_current_user),
+):
+    return await svc.assign_category(
+        user_id=current_user.id,
+        transaction_id=transaction_id,
+        category_id=body.category_id,
     )

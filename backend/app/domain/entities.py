@@ -108,6 +108,7 @@ class TransactionEntity(BaseModel):
 
     removed: bool = False
     budget_category_id: int | None = None
+    budget_category_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

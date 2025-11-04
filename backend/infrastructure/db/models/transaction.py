@@ -4,7 +4,7 @@ from ..base import Base
 
 from datetime import datetime, timezone, date
 from typing import TYPE_CHECKING
-
+from infrastructure.db.models.budgetCategory import BudgetCategory
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -50,3 +50,4 @@ class Transaction(Base):
     budget_category_id: Mapped[int | None] = mapped_column(
         ForeignKey("budget_categories.id", ondelete="SET NULL"), index=True, nullable=True
     )
+    budget_category: Mapped["BudgetCategory"] = relationship("BudgetCategory", lazy="joined")

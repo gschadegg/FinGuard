@@ -244,7 +244,7 @@ export default function BudgetPage() {
                     key={item.id}
                     categoryId={item.id}
                     name={item.name}
-                    spent={223}
+                    spent={0}
                     budget={item.allotted_amount}
                     onEdit={() => handleCategoryEdit(item)}
                     onDelete={() => handleOpenDeleteModal(item)}

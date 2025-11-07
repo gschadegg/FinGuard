@@ -1,9 +1,10 @@
 import asyncio
+from datetime import date as DateType
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from fraud_detection.prediction import load_pipeline, predict_single
 from infrastructure.db.repos.transaction_repo import SqlTransactionRepo
-from datetime import date as DateType
 
 
 class FraudDetectionService:
@@ -48,7 +49,12 @@ class FraudDetectionService:
 
             updates = []
             for txn_id, amount, payment_channel, pending, txn_date, merchant in rows:
-                date_str = txn_date.isoformat() if isinstance(txn_date, DateType) else (str(txn_date) if txn_date else None)
+                date_str = (
+                    txn_date.isoformat()
+                    if isinstance(txn_date, DateType)
+                    else (str(txn_date) if txn_date else None)
+                )
+                
                 features = {
                     "amount": float(amount or 0.0),
                     "payment_channel": payment_channel,
@@ -57,7 +63,11 @@ class FraudDetectionService:
                     "merchant_name": merchant,
                 }
 
-                prediction_score, is_suspected, risk_tier = predict_single(features, self._feature_state, self._models)
+                prediction_score, is_suspected, risk_tier = predict_single(
+                    features, 
+                    self._feature_state, 
+                    self._models
+                )
                 updates.append((txn_id, prediction_score, is_suspected, risk_tier))
 
             await repo.set_fraud_results(updates)

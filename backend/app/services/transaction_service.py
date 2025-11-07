@@ -6,19 +6,21 @@ from app.db_interfaces import AccountRepo, BudgetCategoryRepo, ConnectionItemRep
 from app.domain.entities import TransactionsPageEntity
 from app.security.crypto import decrypt
 from app.services.plaid_service import PlaidService
-
+from app.services.fraud_detection_service import FraudDetectionService
 
 class TransactionService:
     def __init__(self, transaction_repo: TransactionRepo, 
                  account_repo: AccountRepo, connection_item_repo: ConnectionItemRepo, 
                  plaid: PlaidService,
-                 budget_category_repo: BudgetCategoryRepo
+                 budget_category_repo: BudgetCategoryRepo,
+                 fraud_detection_svc: FraudDetectionService
                 ):
         self.transaction_repo = transaction_repo
         self.account_repo = account_repo
         self.connection_item_repo = connection_item_repo
         self.plaid = plaid
         self.budget_category_repo = budget_category_repo
+        self.fraud_detection_svc = fraud_detection_svc
 
 
     async def sync_connection_item(self, item_id: int, user_id: int) -> dict:
@@ -30,10 +32,16 @@ class TransactionService:
         cursor = item.transactions_cursor
 
         added = modified = removed = 0
+        to_check_fraud_ids = []
+
         while True:
             changed = await self.plaid.transactions_sync(access_token, cursor)
-            for tx in changed["added"] + changed["modified"]:
-                await self.transaction_repo.upsert_from_plaid(item, tx)
+            for txn in changed["added"] + changed["modified"]:
+                txn_id = await self.transaction_repo.upsert_from_plaid(item, txn)
+
+                if txn_id:
+                    to_check_fraud_ids.append(txn_id)
+
             if changed["removed"]:
                 await self.transaction_repo.mark_removed([r["transaction_id"] 
                                                           for r in changed["removed"]])
@@ -47,6 +55,8 @@ class TransactionService:
                 break
 
         await self.connection_item_repo.update_transactions_cursor(item_id=item.id, cursor=cursor)
+        self.fraud_detection_svc.enqueue_ids(to_check_fraud_ids)
+
         return {"ok": True, "added": added, "modified": modified, "removed": removed}
 
 

@@ -154,6 +154,14 @@ class MockPlaidService:
         return {"added": [], "modified": [], "removed": [], "next_cursor": cursor, "has_more": False}
 
 
+class MockFraudDetectionService:
+    def __init__(self):
+        self.calls = []
+        self.enabled = True
+    
+    def enqueue_ids(self, ids):
+        return
+
 
 @pytest.fixture
 def svc(monkeypatch):
@@ -164,14 +172,16 @@ def svc(monkeypatch):
     connection_item_repo = MockConnectionItemRepo()
     budget_category_repo = MockBudgetCategoryRepo()
     plaid = MockPlaidService()
+    fraud_detection_svc=MockFraudDetectionService()
 
     svc = TransactionService(transaction_repo=transaction_repo, account_repo=account_repo,
-                             connection_item_repo=connection_item_repo, plaid=plaid, budget_category_repo=budget_category_repo)
+                             connection_item_repo=connection_item_repo, plaid=plaid, budget_category_repo=budget_category_repo, fraud_detection_svc=fraud_detection_svc)
 
 
     svc.transaction_repo = transaction_repo
     svc.connection_item_repo = connection_item_repo
     svc.plaid = plaid
+    svc.fraud_detection_svc = fraud_detection_svc
     return svc
 
 

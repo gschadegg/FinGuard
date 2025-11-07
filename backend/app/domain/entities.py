@@ -105,7 +105,8 @@ class TransactionEntity(BaseModel):
 
     fraud_score: float | None = None
     is_fraud_suspected: bool = False
-
+    risk_level: str | None = None
+    
     removed: bool = False
     budget_category_id: int | None = None
     budget_category_name: str | None = None

@@ -108,7 +108,13 @@ export function TransactionDataTable({ columns, pager }) {
               <TableSkeleton colSpan={columns.length} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  data-risk-level={row.original.risk_level || 'none'}
+                  data-txn-id={row.original.id}
+                  data-testid={'transaction-row'}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

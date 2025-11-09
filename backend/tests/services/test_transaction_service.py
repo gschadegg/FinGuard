@@ -20,6 +20,9 @@ class MockTransactionRepo:
         self._tx_by_id: dict[int, dict] = {}
         self.set_category_calls: list[tuple[int, int | None]] = [] 
 
+        self.set_fraud_review_calls: list[dict] = []
+        self.force_set_review_result: bool | None = None
+
     def _createTransaction(self, *, txn_id: int, user_id: int, category_id: int | None):
         self._tx_by_id[txn_id] = {"id": txn_id, "user_id": user_id, "category_id": category_id}
 
@@ -91,6 +94,21 @@ class MockTransactionRepo:
         
         tx["category_id"] = category_id
         self.set_category_calls.append((transaction_id, category_id))
+
+        return True
+    
+
+    async def set_fraud_review(self, *, user_id: int, transaction_id: int, status: str) -> bool:
+        self.set_fraud_review_calls.append(
+            {"user_id": user_id, "transaction_id": transaction_id, "status": status}
+        )
+
+        if self.force_set_review_result is False:
+            return False
+
+        txn = self._tx_by_id.get(transaction_id)
+        if not txn or txn["user_id"] != user_id:
+            return False
 
         return True
 
@@ -468,3 +486,79 @@ async def test_assign_category_reassign(svc):
 
     assert out1 == {"ok": True} and out2 == {"ok": True} and out3 == {"ok": True}
     assert svc.transaction_repo._tx_by_id[404]["category_id"] == 11
+
+
+
+############################
+# set_fraud_review Tests
+############################
+
+
+# TC-TX-REVIEW-001: base scenario, transaction updated with fraud reviewed status
+@pytest.mark.anyio
+async def test_set_fraud_review_base(svc):
+    svc.transaction_repo._createTransaction(txn_id=999, user_id=7, category_id=None)
+
+    updated = await svc.set_fraud_review(user_id=7, transaction_id=999, status="fraud")
+
+    assert updated == {"ok": True, "transaction_id": 999, "status": "fraud"}
+
+    assert svc.transaction_repo.set_fraud_review_calls == [
+        {"user_id": 7, "transaction_id": 999, "status": "fraud"}
+    ]
+
+
+# TC-TX-REVIEW-002: update with invalid status
+@pytest.mark.anyio
+async def test_set_fraud_review_invalid_status(svc):
+    svc.transaction_repo._createTransaction(txn_id=999, user_id=7, category_id=None)
+
+    with pytest.raises(HTTPException) as exception:
+        await svc.set_fraud_review(user_id=7, transaction_id=999, status="invalidStatus")
+
+    assert exception.value.status_code == 400
+    assert "Invalid status" in exception.value.detail
+
+    assert svc.transaction_repo.set_fraud_review_calls == []
+
+
+# TC-TX-REVIEW-003: updating status but transaction not found
+@pytest.mark.anyio
+async def test_set_fraud_review_not_found(svc):
+
+    with pytest.raises(HTTPException) as exception:
+        await svc.set_fraud_review(user_id=7, transaction_id=999, status="fraud")
+
+    assert exception.value.status_code == 404
+    assert "Transaction not found" in exception.value.detail
+
+    assert svc.transaction_repo.set_fraud_review_calls == []
+
+
+# TC-TX-REVIEW-004: reset review status
+@pytest.mark.anyio
+async def test_set_fraud_review_reset(svc):
+
+    svc.transaction_repo._createTransaction(txn_id=999, user_id=7, category_id=None)
+    updated = await svc.set_fraud_review(user_id=7, transaction_id=999, status="pending")
+
+    assert updated == {"ok": True, "transaction_id": 999, "status": "pending"}
+
+    assert svc.transaction_repo.set_fraud_review_calls[-1] == {
+        "user_id": 7, "transaction_id": 999, "status": "pending"
+    }
+
+
+# TC-TX-REVIEW-005: db fails to update with status
+@pytest.mark.anyio
+async def test_set_fraud_review_repo_fails(svc):
+    svc.transaction_repo._createTransaction(txn_id=999, user_id=7, category_id=None)
+    svc.transaction_repo.force_set_review_result = False
+
+    updated = await svc.set_fraud_review(user_id=7, transaction_id=999, status="not_fraud")
+
+    assert updated == {"ok": False, "transaction_id": 999, "status": "not_fraud"}
+    
+    assert svc.transaction_repo.set_fraud_review_calls[-1] == {
+        "user_id": 7, "transaction_id": 999, "status": "not_fraud"
+    }

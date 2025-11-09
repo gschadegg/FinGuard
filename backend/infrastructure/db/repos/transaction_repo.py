@@ -234,7 +234,10 @@ class SqlTransactionRepo:
 
             result = await self.session.execute(
                 update(Transaction)
-                .where(Transaction.id == txn_id)
+                .where(
+                    Transaction.id == txn_id, 
+                    Transaction.fraud_review_status == "pending",
+                )
                 .values(**values)
             )
 
@@ -242,6 +245,35 @@ class SqlTransactionRepo:
 
         await self.session.flush()
         return updated_count > 0
+    
+    async def set_fraud_review(
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        status: str,
+    ) -> bool:
+        
+        now = datetime.now(timezone.utc)
+
+        res = await self.session.execute(
+            update(Transaction)
+            .where(
+                Transaction.id == transaction_id,
+                Transaction.user_id == user_id,
+                Transaction.removed.is_(False),
+            )
+            .values(
+                fraud_review_status=status,
+                updated_at=now,
+            )
+            .returning(Transaction.id)
+        )
+
+        ok = res.scalar_one_or_none() is not None
+        if ok:
+            await self.session.commit()
+        return ok
 
 
 

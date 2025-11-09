@@ -96,6 +96,18 @@ class TransactionRepo(Protocol):
             user_id: int, 
             transaction_id: int
         ) -> TransactionEntity | None: ...
+    async def set_fraud_results(
+        self,
+        updates: Sequence[tuple[int, float, bool, str | None]],
+    ) -> bool: ...
+    async def set_fraud_review(
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        status: str,
+        note: str | None,
+    ) -> bool: ...
 
 
 class BudgetCategoryRepo(Protocol):

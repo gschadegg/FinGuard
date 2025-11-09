@@ -140,3 +140,29 @@ class TransactionService:
         )
 
         return {"ok": updated}
+    
+    
+    async def set_fraud_review(
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        status: str,
+    ) -> dict:
+        
+        txn = await self.transaction_repo.get_owned(user_id, transaction_id)
+
+        if not txn:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+
+        allowed = {"fraud", "not_fraud", "ignored", "pending"}
+        if status not in allowed:
+            raise HTTPException(status_code=400, detail=f"Invalid status")
+
+        updated = await self.transaction_repo.set_fraud_review(
+            user_id=user_id,
+            transaction_id=transaction_id,
+            status=status,
+        )
+
+        return {"ok": updated, "transaction_id": transaction_id, "status": status}

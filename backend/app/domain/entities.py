@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -106,7 +106,8 @@ class TransactionEntity(BaseModel):
     fraud_score: float | None = None
     is_fraud_suspected: bool = False
     risk_level: str | None = None
-    
+    fraud_review_status: Literal["pending", "fraud", "not_fraud", "ignored"] | None = None
+
     removed: bool = False
     budget_category_id: int | None = None
     budget_category_name: str | None = None

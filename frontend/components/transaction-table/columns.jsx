@@ -28,6 +28,7 @@ import RiskReviewModal from '@/components/modals/RiskReviewModal'
 
 import { ASSIGN_BUDGET_CATEGORY, SET_FRAUD_REVIEW } from '@/lib/api_urls'
 import clsx from 'clsx'
+import { useRollups } from '../rollups/RollupProvider'
 
 export const columns = [
   {
@@ -56,11 +57,10 @@ export const columns = [
     accessorKey: 'category',
     header: () => <div>Category</div>,
     cell: ({ row, table }) => {
-       
       const notify = useNotify()
-       
+
       const { makeAuthRequest } = useAuth()
-       
+
       const [saving, setSaving] = useState(false)
 
       const _txn_id = row.original.id
@@ -228,6 +228,7 @@ export const columns = [
     cell: ({ row, table }) => {
       const txn = row.original
       const { makeAuthRequest } = useAuth()
+      const { refresh } = useRollups()
       const notify = useNotify()
       const [open, setOpen] = useState(false)
       const [saving, setSaving] = useState(false)
@@ -271,7 +272,8 @@ export const columns = [
                 ? 'Transaction has been marked as Fraudulent.'
                 : 'Transaction has been marked as Safe.',
           })
-        } catch (e) {
+          refresh()
+        } catch (_e) {
           if (table?.options?.meta?.updateRow) {
             table.options.meta.updateRow(row.index, { fraud_review_status: 'pending' })
           }

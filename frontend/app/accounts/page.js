@@ -1,6 +1,8 @@
 'use client'
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNotify } from '@/components/notification/NotificationProvider'
+import { useRollups } from '@/components/rollups/RollupProvider'
+
 import { columns } from '@/components/transaction-table/columns'
 import { TransactionDataTable } from '@/components/transaction-table'
 import { GET_TRANSACTIONS_BY_USER_ID } from '@/lib/api_urls'
@@ -17,6 +19,7 @@ const STALE_DATA = 5 * 60 * 1000
 export default function AccountsPage() {
   const notify = useNotify()
   const { user, makeAuthRequest, isLoading } = useAuth()
+  const { risks } = useRollups()
   const userId = user?.id
 
   const [start, _setStart] = useState(null)
@@ -84,12 +87,12 @@ export default function AccountsPage() {
         icon: Loader,
       },
       {
-        title: 'Potential Risks',
-        detail: '6',
+        title: 'Potential High Risks',
+        detail: risks?.pending_high,
         icon: ShieldAlert,
       },
     ]
-  }, [])
+  }, [risks?.pending_high])
 
   const pager = useCursor(fetchTransactions, 50, staticArgs)
 

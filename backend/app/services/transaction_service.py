@@ -141,7 +141,7 @@ class TransactionService:
 
         return {"ok": updated}
     
-    
+
     async def set_fraud_review(
         self,
         *,
@@ -166,3 +166,7 @@ class TransactionService:
         )
 
         return {"ok": updated, "transaction_id": transaction_id, "status": status}
+    
+
+    async def get_rollups(self, user_id: int) -> dict:
+        return await self.transaction_repo.risk_rollups_for_user(user_id)

@@ -36,6 +36,8 @@ export const ASSIGN_BUDGET_CATEGORY = (transactionId) =>
 export const SET_FRAUD_REVIEW = (transactionId) =>
   `${ROOT}/transactions/${transactionId}/fraud-review`
 
+export const GET_RISKS_ROLLUP = `${ROOT}/transactions/rollups`
+
 const withQuery = (url, params) => {
   if (!params) return url
   const query = new URLSearchParams(params).toString()

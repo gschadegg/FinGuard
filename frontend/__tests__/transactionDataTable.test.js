@@ -36,6 +36,22 @@ jest.mock('./../components/auth/AuthProvider', () => ({
   }),
 }))
 
+jest.mock('./../components/rollups/RollupProvider', () => {
+  return {
+    RollupsProvider: ({ children }) => children,
+    useRollups: () => ({
+      risks: {
+        pending_total: 0,
+        pending_high: 0,
+        pending_medium: 0,
+        pending_low: 0,
+      },
+      byAccount: {},
+      refresh: jest.fn(),
+    }),
+  }
+})
+
 //TC-TABLE-DISPLAY-001: BASE scenario, table renders rows with data
 test('Table renders with data rows', () => {
   const rows = [

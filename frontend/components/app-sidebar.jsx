@@ -31,9 +31,13 @@ import { useUserContext } from './user-data'
 import { CreateLinkAccountButton } from '@/components/create-plaid-connection'
 import { useAuth } from './auth/AuthProvider'
 
+import { useRollups } from '@/components/rollups/RollupProvider'
+import { Badge } from '@/components/ui/badge'
+
 export function AppSidebar() {
   const { accounts, user } = useUserContext()
   const { logout } = useAuth()
+  const { byAccount } = useRollups()
 
   return (
     <Sidebar>
@@ -86,15 +90,26 @@ export function AppSidebar() {
 
                       {accounts ? (
                         accounts.length > 0 ? (
-                          accounts.map((account) => (
-                            <SidebarMenuSubItem key={account.id}>
-                              <SidebarMenuButton asChild>
-                                <Link href={`/accounts/${account.id}`}>
-                                  {account.institution_name} - {account.name}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuSubItem>
-                          ))
+                          accounts.map((account) => {
+                            const count = byAccount?.[account.id] || 0
+                            return (
+                              <SidebarMenuSubItem key={account.id}>
+                                <SidebarMenuButton asChild>
+                                  <Link href={`/accounts/${account.id}`}>
+                                    {account.institution_name} - {account.name}
+                                    {count > 0 && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="ml-2 text-[10px] leading-4 h-5 min-w-5 rounded-full px-1 tabular-nums"
+                                      >
+                                        {count}
+                                      </Badge>
+                                    )}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuSubItem>
+                            )
+                          })
                         ) : (
                           <SidebarMenuSubItem
                             aria-disabled="true"

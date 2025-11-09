@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, and_, or_, inspect as sa_inspect
+from sqlalchemy import select, update, and_, or_, inspect as sa_inspect, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.dialects.postgresql import insert
@@ -274,7 +274,62 @@ class SqlTransactionRepo:
         if ok:
             await self.session.commit()
         return ok
+    
 
+    async def risk_rollups_for_user(self, user_id: int) -> dict:
+        totals_stmt = (
+            select(
+                func.count().filter(Transaction.fraud_review_status == "pending").label("pending_total"),
+                func.count().filter(
+                    and_(
+                        Transaction.fraud_review_status == "pending",
+                        or_(Transaction.is_fraud_suspected.is_(True), Transaction.risk_level == "high"),
+                    )
+                ).label("pending_high"),
+                func.count().filter(
+                    and_(
+                        Transaction.fraud_review_status == "pending",
+                        Transaction.is_fraud_suspected.is_(False),
+                        Transaction.risk_level == "medium",
+                    )
+                ).label("pending_medium"),
+                func.count().filter(
+                    and_(
+                        Transaction.fraud_review_status == "pending",
+                        Transaction.is_fraud_suspected.is_(False),
+                        Transaction.risk_level == "low",
+                    )
+                ).label("pending_low"),
+            )
+            .where(Transaction.user_id == user_id, Transaction.removed.is_(False))
+        )
+
+        pending_total, pending_high, pending_medium, pending_low = (
+            await self.session.execute(totals_stmt)
+        ).one()
+
+        by_acct_rows = await self.session.execute(
+            select(Transaction.account_id, func.count())
+            .where(
+                Transaction.user_id == user_id,
+                Transaction.removed.is_(False),
+                Transaction.fraud_review_status == "pending",
+                or_(Transaction.is_fraud_suspected.is_(True), Transaction.risk_level == "high"),
+            )
+            .group_by(Transaction.account_id)
+        )
+
+        by_account = {acct_id: int(cnt) for acct_id, cnt in by_acct_rows if acct_id is not None}
+
+        return {
+            "risks": {
+                "pending_total": int(pending_total or 0),
+                "pending_high": int(pending_high or 0),
+                "pending_medium": int(pending_medium or 0),
+                "pending_low": int(pending_low or 0),
+            },
+            "by_account": by_account,
+        }
 
 
 # needed for converting plaid dictionarys recieved to patch into db rows

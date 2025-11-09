@@ -120,3 +120,11 @@ async def set_fraud_review(
         transaction_id=transaction_id,
         status=body.status,
     )
+
+
+@router.get("/rollups")
+async def get_transaction_rollups(
+    svc: TransactionService = Depends(get_transaction_service),
+    current_user = Depends(get_current_user),
+):
+    return await svc.get_rollups(current_user.id)

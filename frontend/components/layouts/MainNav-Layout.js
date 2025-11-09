@@ -8,6 +8,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import NotificationStack from '@/components/notification'
 import RenewSessionDialog from '@/components/RenewSessionDialog'
 import { RequireAuth } from '@/components/auth/RequireAuth'
+import RiskAlert from '@/components/rollups/RiskAlertPoll'
 
 export default function MainNavLayout({ defaultOpen, children }) {
   const { token, isLoading, showSessionPrompt } = useAuth()
@@ -49,6 +50,7 @@ export default function MainNavLayout({ defaultOpen, children }) {
         <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
           <SidebarTrigger className="p-3 ml-2 mt-6" />
+          <RiskAlert />
           {children}
           <NotificationStack />
           {showSessionPrompt && <RenewSessionDialog />}

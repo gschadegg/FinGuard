@@ -6,6 +6,7 @@ import { NotificationProvider } from '@/components/notification/NotificationProv
 
 import { UserProvider } from '@/components/user-data'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import { RollupsProvider } from '@/components/rollups/RollupProvider'
 import { cookies } from 'next/headers'
 
 import MainNavLayout from '@/components/layouts/MainNav-Layout'
@@ -38,9 +39,11 @@ export default async function RootLayout({ children }) {
         >
           <NotificationProvider>
             <AuthProvider>
-              <UserProvider>
-                <MainNavLayout defaultOpen={defaultOpen}>{children}</MainNavLayout>
-              </UserProvider>
+              <RollupsProvider>
+                <UserProvider>
+                  <MainNavLayout defaultOpen={defaultOpen}>{children}</MainNavLayout>
+                </UserProvider>
+              </RollupsProvider>
             </AuthProvider>
           </NotificationProvider>
         </ThemeProvider>

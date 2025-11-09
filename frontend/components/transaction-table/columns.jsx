@@ -56,11 +56,11 @@ export const columns = [
     accessorKey: 'category',
     header: () => <div>Category</div>,
     cell: ({ row, table }) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const notify = useNotify()
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const { makeAuthRequest } = useAuth()
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const [saving, setSaving] = useState(false)
 
       const _txn_id = row.original.id

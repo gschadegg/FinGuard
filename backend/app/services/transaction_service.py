@@ -157,7 +157,7 @@ class TransactionService:
 
         allowed = {"fraud", "not_fraud", "ignored", "pending"}
         if status not in allowed:
-            raise HTTPException(status_code=400, detail=f"Invalid status")
+            raise HTTPException(status_code=400, detail="Invalid status")
 
         updated = await self.transaction_repo.set_fraud_review(
             user_id=user_id,

@@ -113,7 +113,7 @@ export function TransactionDataTable({ columns, pager }) {
                   data-state={row.getIsSelected() && 'selected'}
                   data-risk-level={row.original.risk_level || 'none'}
                   data-txn-id={row.original.id}
-                  data-testId={'transaction-row'}
+                  data-testid={'transaction-row'}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

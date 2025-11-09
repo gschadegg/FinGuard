@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 'use client'
 import {
   Select,
@@ -23,8 +24,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { useAuth } from '@/components/auth/AuthProvider'
+import RiskReviewModal from '@/components/modals/RiskReviewModal'
 
-import { ASSIGN_BUDGET_CATEGORY } from '@/lib/api_urls'
+import { ASSIGN_BUDGET_CATEGORY, SET_FRAUD_REVIEW } from '@/lib/api_urls'
 import clsx from 'clsx'
 
 export const columns = [
@@ -54,11 +56,11 @@ export const columns = [
     accessorKey: 'category',
     header: () => <div>Category</div>,
     cell: ({ row, table }) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const notify = useNotify()
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const { makeAuthRequest } = useAuth()
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+       
       const [saving, setSaving] = useState(false)
 
       const _txn_id = row.original.id
@@ -151,22 +153,22 @@ export const columns = [
     accessorKey: 'is_fraud_suspected',
     header: () => <div>Risk Assessment</div>,
     cell: ({ row }) => {
-      const { is_fraud_suspected, fraud_score, risk_level } = row.original
+      const { is_fraud_suspected, fraud_score, risk_level, fraud_review_status } = row.original
 
       const score = fraud_score !== null ? Number(fraud_score) : null
 
       const label =
         score === null
           ? 'In Progress'
-          : // : reviewed
-            // ? "Reviewed"
-            is_fraud_suspected
-            ? 'High'
-            : risk_level === 'medium'
-              ? 'Medium'
-              : risk_level === 'low'
-                ? 'Low'
-                : 'No Risk'
+          : fraud_review_status && fraud_review_status !== 'pending'
+            ? 'Reviewed'
+            : is_fraud_suspected
+              ? 'High'
+              : risk_level === 'medium'
+                ? 'Medium'
+                : risk_level === 'low'
+                  ? 'Low'
+                  : 'No Risk'
 
       let icon, colorClass
 
@@ -188,7 +190,7 @@ export const columns = [
           colorClass = 'text-red-600 border-gray-400/40'
           break
         case 'Reviewed':
-          if (is_fraud_suspected) {
+          if (fraud_review_status === 'fraud') {
             icon = <ShieldAlert className="text-red-600" />
             colorClass = 'text-red-600 border-gray-400/40'
           } else {
@@ -223,33 +225,92 @@ export const columns = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
-      const { is_fraud_suspected, _fraud_score } = row.original
+    cell: ({ row, table }) => {
+      const txn = row.original
+      const { makeAuthRequest } = useAuth()
+      const notify = useNotify()
+      const [open, setOpen] = useState(false)
+      const [saving, setSaving] = useState(false)
+
+      const suspected = !!txn.is_fraud_suspected
+      const riskLevel = txn.risk_level || (suspected ? 'high' : 'low')
+      const defaultAction = suspected ? 'not_fraud' : 'fraud'
+
+      const actionLabel = 'Risk Review'
+
+      async function handleSubmit(status) {
+        try {
+          setSaving(true)
+
+          if (table?.options?.meta?.updateRow) {
+            table.options.meta.updateRow(row.index, { fraud_review_status: status })
+          }
+
+          const res = await makeAuthRequest(SET_FRAUD_REVIEW(txn.id), {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+          })
+
+          if (!res?.ok) {
+            if (table?.options?.meta?.updateRow) {
+              table.options.meta.updateRow(row.index, { fraud_review_status: 'pending' })
+            }
+            notify({
+              type: 'error',
+              title: 'Risk Review Failed',
+              message: 'We are experiencing issues saving your review. Please try again.',
+            })
+            return
+          }
+
+          notify({
+            type: 'success',
+            title: 'Risk Review Saved',
+            message:
+              status === 'fraud'
+                ? 'Transaction has been marked as Fraudulent.'
+                : 'Transaction has been marked as Safe.',
+          })
+        } catch (e) {
+          if (table?.options?.meta?.updateRow) {
+            table.options.meta.updateRow(row.index, { fraud_review_status: 'pending' })
+          }
+          notify({
+            type: 'error',
+            title: 'Risk Review Failed',
+            message: 'We are experiencing issues saving your review. Please try again.',
+          })
+        } finally {
+          setSaving(false)
+        }
+      }
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-              <span className="sr-only">Open menu</span>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {/* NEED THIS TO CHANGE BASED ON RISK LEVEL ONCE ADDED */}
-            {is_fraud_suspected ? (
-              <DropdownMenuItem className="cursor-pointer" onClick={() => {}}>
-                Mark as Safe
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer" disabled={saving}>
+                <span className="sr-only">Open menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setOpen(true)}>
+                {actionLabel}
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem className="cursor-pointer" onClick={() => {}}>
-                Mark as Fraudulent
-              </DropdownMenuItem>
-            )}
-            {/* <DropdownMenuSeparator />
-            <DropdownMenuItem>Other Option</DropdownMenuItem> */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <RiskReviewModal
+            open={open}
+            onOpenChange={setOpen}
+            riskLevel={riskLevel}
+            institution={txn.institution_name || null}
+            defaultAction={defaultAction}
+            onSubmit={handleSubmit}
+          />
+        </>
       )
     },
   },

@@ -2,7 +2,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.domain.entities import (
     TransactionsPageEntity,
@@ -14,6 +14,9 @@ from app.services_container import get_transaction_service
 
 class AssignCategoryBody(BaseModel):
     category_id: Optional[int] = None
+
+class FraudReviewBody(BaseModel):
+    status: str = Field(..., description="fraud | not_fraud | ignored | pending")
 
 router = APIRouter(
     prefix="/transactions", 
@@ -102,4 +105,18 @@ async def assign_transaction_category(
         user_id=current_user.id,
         transaction_id=transaction_id,
         category_id=body.category_id,
+    )
+
+
+@router.put("/{transaction_id}/fraud-review")
+async def set_fraud_review(
+    transaction_id: int,
+    body: FraudReviewBody,
+    svc: TransactionService = Depends(get_transaction_service),
+    current_user = Depends(get_current_user),
+):
+    return await svc.set_fraud_review(
+        user_id=current_user.id,
+        transaction_id=transaction_id,
+        status=body.status,
     )

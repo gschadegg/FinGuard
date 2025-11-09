@@ -33,6 +33,9 @@ export const DELETE_BUDGET_CATEGORY = (categoryId) =>
 export const ASSIGN_BUDGET_CATEGORY = (transactionId) =>
   `${ROOT}/transactions/${encodeURIComponent(transactionId)}/category`
 
+export const SET_FRAUD_REVIEW = (transactionId) =>
+  `${ROOT}/transactions/${transactionId}/fraud-review`
+
 const withQuery = (url, params) => {
   if (!params) return url
   const query = new URLSearchParams(params).toString()

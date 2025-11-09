@@ -1,10 +1,19 @@
-from sqlalchemy import String, ForeignKey, DateTime, UniqueConstraint, Index, Boolean, Date, Numeric
+from sqlalchemy import String, ForeignKey, DateTime, UniqueConstraint, Index, Boolean, Date, Numeric, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..base import Base
 
 from datetime import datetime, timezone, date
 from typing import TYPE_CHECKING
 from infrastructure.db.models.budgetCategory import BudgetCategory
+import enum
+
+
+class FraudReviewStatus(str, enum.Enum):
+    pending   = "pending"
+    fraud     = "fraud"
+    not_fraud = "not_fraud"
+    ignored   = "ignored" 
+
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -43,6 +52,11 @@ class Transaction(Base):
     fraud_score: Mapped[float | None]
     is_fraud_suspected: Mapped[bool] = mapped_column(Boolean, default=False)
     risk_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    fraud_review_status: Mapped[FraudReviewStatus] = mapped_column(
+        Enum(FraudReviewStatus, name="fraud_review_status"),
+        nullable=False,
+        default=FraudReviewStatus.pending,
+    )
 
     removed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

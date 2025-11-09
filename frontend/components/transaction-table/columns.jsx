@@ -203,7 +203,11 @@ export const columns = [
           colorClass = 'text-gray-600 border-gray-400/40'
       }
       return (
-        <Badge variant="outline" className={clsx('text-right font-medium', colorClass)}>
+        <Badge
+          variant="outline"
+          className={clsx('text-right font-medium', colorClass)}
+          data-testid={'risk-badge'}
+        >
           {icon}
           {label}
         </Badge>

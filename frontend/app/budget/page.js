@@ -5,7 +5,7 @@ import { useNotify } from '@/components/notification/NotificationProvider'
 
 import PageLayout from '@/components/layouts/page-layout'
 import RollupCardRow from '@/components/rollup-cards'
-import { DollarSign, Plus, Calendar as CalendarIcon } from 'lucide-react'
+import { DollarSign, Plus, Calendar as CalendarIcon, Info } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -231,10 +231,17 @@ export default function BudgetPage() {
     <>
       <PageLayout pageTitle="Budget" action={AddCategoryBtn}>
         <RollupCardRow cardData={cardData} />
-        {Object.entries(categories)
-          .filter(([_groupName, items]) => items?.length > 0)
-          .map(([groupName, items]) => {
-            return (
+        {Object.values(categories).every((items) => !items || items.length === 0) ? (
+          <p className="text-center text-gray-500 mt-8 ">
+            <span className="inline-flex items-center gap-2">
+              <Info className="h-4 w-4 opacity-80 " />
+              You have no budget categories yet, add some!
+            </span>
+          </p>
+        ) : (
+          Object.entries(categories)
+            .filter(([_groupName, items]) => items?.length > 0)
+            .map(([groupName, items]) => (
               <div key={groupName}>
                 <h2 className="mb-4 text-xl text-gray-500 font-semibold tracking-tight mt-8">
                   {groupName}
@@ -251,8 +258,8 @@ export default function BudgetPage() {
                   />
                 ))}
               </div>
-            )
-          })}
+            ))
+        )}
       </PageLayout>
 
       {/* CATEGORY MODALs */}

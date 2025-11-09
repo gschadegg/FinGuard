@@ -1,17 +1,18 @@
-from sqlalchemy import select, update, and_, or_
+from sqlalchemy import select, update, and_, or_, inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from sqlalchemy.dialects.postgresql import insert
 from datetime import date
 from decimal import Decimal
 
 from pydantic import BaseModel
-from datetime import date as _date
-from infrastructure.db.models import Transaction, Account, ConnectionItem
+from infrastructure.db.models import Transaction, Account
 from app.domain.entities import TransactionEntity, ConnectionItemEntity
 from app.utils.cursor import encode_cursor, decode_cursor
-from sqlalchemy.dialects.postgresql import insert
 
-from sqlalchemy import inspect as sa_inspect
+from datetime import datetime, timezone, date as _date
+from typing import Sequence, Iterable
+
 
 PAGE_DEFAULT = 50
 PAGE_MAX = 200
@@ -192,6 +193,55 @@ class SqlTransactionRepo:
         await self.session.commit() 
 
         return updated_id is not None
+    
+    async def fetch_transactions_for_ML_Model(
+        self, ids: Iterable[int]
+    ) -> list[tuple[int, float | None, str | None, bool, object, str | None]]:
+
+        rows = (await self.session.execute(
+            select(
+                Transaction.id,
+                Transaction.amount,
+                Transaction.payment_channel,
+                Transaction.pending,
+                Transaction.date,
+                Transaction.merchant_name,
+            ).where(Transaction.id.in_(list(ids)))
+        )).all()
+        return rows
+    
+
+    async def set_fraud_results(
+        self,
+        updates: Sequence[tuple[int, float, bool, str | None]],
+    ) -> bool:
+        
+        if not updates:
+            return False
+
+        now = datetime.now(timezone.utc)
+        updated_count = 0
+
+        for txn_id, prediction_score, is_suspected, risk_tier in updates:
+            values = {
+                "fraud_score": prediction_score,
+                "is_fraud_suspected": is_suspected,
+                "updated_at": now,
+            }
+
+            if hasattr(Transaction, "risk_level") and risk_tier is not None:
+                values["risk_level"] = risk_tier
+
+            result = await self.session.execute(
+                update(Transaction)
+                .where(Transaction.id == txn_id)
+                .values(**values)
+            )
+
+            updated_count += result.rowcount or 0
+
+        await self.session.flush()
+        return updated_count > 0
 
 
 

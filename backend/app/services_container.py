@@ -6,6 +6,7 @@ from app.config import get_settings
 from app.services.account_service import AccountService
 from app.services.auth_service import AuthService
 from app.services.budget_service import BudgetService
+from app.services.fraud_detection_service import FraudDetectionService
 from app.services.plaid_service import PlaidService
 from app.services.transaction_service import TransactionService
 from app.services.user_service import UserService
@@ -14,7 +15,7 @@ from infrastructure.db.repos.budget_category_repo import SqlBudgetCategoryRepo
 from infrastructure.db.repos.connectionItem_repo import SqlConnectionItemRepo
 from infrastructure.db.repos.transaction_repo import SqlTransactionRepo
 from infrastructure.db.repos.user_repo import SqlUserRepo
-from infrastructure.db.session import get_db
+from infrastructure.db.session import SessionLocal, get_db
 
 settings = get_settings()
 
@@ -59,9 +60,24 @@ async def get_auth_service(
         settings = settings
     )
 
+
+async def get_fraud_detection_service(
+        db: AsyncSession = Depends(get_db)
+    ) -> FraudDetectionService:
+
+    return FraudDetectionService(
+        # uses background service to run in tandem so need SessionLocal
+        session_factory=SessionLocal,
+        # transaction_repo=transaction_repo,
+        model_path="fraud_detection/fraud_model.joblib",
+        enabled=True,
+        
+    ) 
+
 async def get_transaction_service(
         db: AsyncSession = Depends(get_db), 
-        plaid: PlaidService = Depends(get_plaid_service)
+        plaid: PlaidService = Depends(get_plaid_service),
+        fraud_detection_svc: FraudDetectionService = Depends(get_fraud_detection_service)
     ) -> TransactionService:
     
     account_repo = SqlAccountRepo(db)
@@ -74,11 +90,12 @@ async def get_transaction_service(
         connection_item_repo=connection_item_repo, 
         transaction_repo=transaction_repo,
         plaid=plaid,
-        budget_category_repo=budget_category_repo
+        budget_category_repo=budget_category_repo,
+        fraud_detection_svc=fraud_detection_svc
     )
 
 
-def get_budget_service(
+async def get_budget_service(
         db: AsyncSession = Depends(get_db)
     ) -> BudgetService:
 

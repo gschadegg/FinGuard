@@ -42,6 +42,7 @@ class Transaction(Base):
     notes: Mapped[str | None] = mapped_column(String(512))
     fraud_score: Mapped[float | None]
     is_fraud_suspected: Mapped[bool] = mapped_column(Boolean, default=False)
+    risk_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     removed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

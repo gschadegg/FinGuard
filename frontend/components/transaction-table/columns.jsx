@@ -9,11 +9,10 @@ import {
 import { useNotify } from '@/components/notification/NotificationProvider'
 import { useState } from 'react'
 
-import { Loader } from 'lucide-react'
 import { MoreVertical } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Loader, ShieldCheck, ShieldAlert } from 'lucide-react'
 
 import {
   DropdownMenu,
@@ -26,6 +25,7 @@ import {
 import { useAuth } from '@/components/auth/AuthProvider'
 
 import { ASSIGN_BUDGET_CATEGORY } from '@/lib/api_urls'
+import clsx from 'clsx'
 
 export const columns = [
   {
@@ -151,24 +151,58 @@ export const columns = [
     accessorKey: 'is_fraud_suspected',
     header: () => <div>Risk Assessment</div>,
     cell: ({ row }) => {
-      const { is_fraud_suspected, fraud_score } = row.original
+      const { is_fraud_suspected, fraud_score, risk_level } = row.original
 
       const score = fraud_score !== null ? Number(fraud_score) : null
 
       const label =
         score === null
           ? 'In Progress'
-          : is_fraud_suspected && score >= 80
+          : // : reviewed
+            // ? "Reviewed"
+            is_fraud_suspected
             ? 'High'
-            : is_fraud_suspected && score >= 40
+            : risk_level === 'medium'
               ? 'Medium'
-              : is_fraud_suspected && score > 0
+              : risk_level === 'low'
                 ? 'Low'
                 : 'No Risk'
 
+      let icon, colorClass
+
+      switch (label) {
+        case 'In Progress':
+          icon = <Loader className="text-sky-500" />
+          colorClass = 'border-gray-400/40'
+          break
+        case 'Low':
+          icon = <ShieldCheck className="text-green-600" />
+          colorClass = 'border-gray-400/40'
+          break
+        case 'Medium':
+          icon = <ShieldCheck className="text-amber-600" />
+          colorClass = 'text-amber-600 border-gray-400/40'
+          break
+        case 'High':
+          icon = <ShieldAlert className="text-red-600" />
+          colorClass = 'text-red-600 border-gray-400/40'
+          break
+        case 'Reviewed':
+          if (is_fraud_suspected) {
+            icon = <ShieldAlert className="text-red-600" />
+            colorClass = 'text-red-600 border-gray-400/40'
+          } else {
+            icon = <ShieldCheck className=" text-green-600" />
+            colorClass = 'text-green-600 border-gray-400/40'
+          }
+          break
+        default:
+          icon = <ShieldCheck className="text-gray-500" />
+          colorClass = 'text-gray-600 border-gray-400/40'
+      }
       return (
-        <Badge variant="outline" className="text-right font-medium">
-          <Loader className="text-sky-500" />
+        <Badge variant="outline" className={clsx('text-right font-medium', colorClass)}>
+          {icon}
           {label}
         </Badge>
       )

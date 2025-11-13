@@ -1,5 +1,6 @@
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
 from fastapi import HTTPException
 
 from app.db_interfaces import BudgetCategoryRepo

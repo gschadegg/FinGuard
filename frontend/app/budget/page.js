@@ -46,7 +46,10 @@ export default function BudgetPage() {
   const notify = useNotify()
   const { makeAuthRequest } = useAuth()
 
-  const [totalBudget, setTotalBudget] = useState(0)
+  const [totalBudget, setTotalBudget] = useState({
+    Spent: 0,
+    Budgeted: 0,
+  })
   const [categories, setCategories] = useState({
     Expenses: [],
     Savings: [],
@@ -64,19 +67,22 @@ export default function BudgetPage() {
       },
       {
         title: 'Total Budgeted',
-        detail: `${formatCurrency(totalBudget)}`,
+        detail: `${formatCurrency(totalBudget?.Budgeted)}`,
         icon: DollarSign,
       },
       {
         title: 'Total Spent',
-        detail: '-$1,900',
+        detail: `${formatCurrency(totalBudget?.Spent)}`,
         icon: DollarSign,
       },
     ]
   }, [month, totalBudget])
 
   useEffect(() => {
-    setTotalBudget(calcTotalBudget(categories))
+    setTotalBudget((prev) => {
+      const newTotal = calcTotalBudget(categories)
+      return { ...prev, Budgeted: newTotal }
+    })
   }, [categories])
 
   useEffect(() => {
@@ -93,7 +99,7 @@ export default function BudgetPage() {
             }
             setCategories(groupedData)
           }
-          setTotalBudget(res?.total_budgeted)
+          setTotalBudget({ Budgeted: res?.total_budgeted, Spent: res?.total_spent })
         }
       } catch {
         notify({
@@ -169,20 +175,30 @@ export default function BudgetPage() {
         })
 
         setCategories((prev) => {
+          const existing =
+            prev.Expenses.find((c) => c.id === itemId) ??
+            prev.Savings.find((c) => c.id === itemId) ??
+            prev.Entertainment.find((c) => c.id === itemId)
+
           const base = {
             Expenses: prev.Expenses.filter((c) => c.id !== itemId),
             Savings: prev.Savings.filter((c) => c.id !== itemId),
             Entertainment: prev.Entertainment.filter((c) => c.id !== itemId),
           }
+
           const target = CATEGORY_GROUPS.includes(updatedItem.group)
             ? updatedItem.group
             : 'Expenses'
 
+          const mergedItem = {
+            ...(existing || {}),
+            ...updatedItem,
+            id: itemId,
+          }
+
           return {
             ...base,
-            [target]: [...base[target], { ...updatedItem, id: itemId }].sort((a, b) =>
-              a.name.localeCompare(b.name)
-            ),
+            [target]: [...base[target], mergedItem].sort((a, b) => a.name.localeCompare(b.name)),
           }
         })
       }
@@ -251,7 +267,7 @@ export default function BudgetPage() {
                     key={item.id}
                     categoryId={item.id}
                     name={item.name}
-                    spent={0}
+                    spent={item?.spent_amount}
                     budget={item.allotted_amount}
                     onEdit={() => handleCategoryEdit(item)}
                     onDelete={() => handleOpenDeleteModal(item)}

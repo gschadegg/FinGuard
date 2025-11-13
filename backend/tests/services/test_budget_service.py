@@ -1,5 +1,6 @@
 import pytest
 from decimal import Decimal
+from datetime import date
 from types import SimpleNamespace
 from fastapi import HTTPException
 
@@ -15,8 +16,8 @@ class MockBudgetCategoryRepo:
         self.deleted = []
         self.listed_for = []
 
-    async def list_by_user(self, user_id: int):
-        self.listed_for.append(user_id)
+    async def list_by_user(self, user_id: int, start_date=None, end_date=None):
+        self.listed_for.append((user_id, start_date, end_date))
 
         return [e for e in self._by_id.values() if e.user_id == user_id]
 
@@ -96,11 +97,11 @@ def _createCategory(repo: MockBudgetCategoryRepo, *, id=1, user_id=7, name="Groc
     return entity
 
 
-# =========================
+############################
 # crud budget tests
-# =========================
+############################
 
-# TC-BC-LIST-001: Lists user categories
+# TC-BC-LIST-001: Lists user categories for specific month and year
 @pytest.mark.anyio
 async def test_list_categories_by_user(svc):
     repo = svc.budget_repo
@@ -110,11 +111,83 @@ async def test_list_categories_by_user(svc):
     _createCategory(repo, id=2, user_id=10, name="Movies", amt="50.00", group="Entertainment")
     _createCategory(repo, id=3, user_id=99, name="OtherUser", amt="1.00", group="Savings")
 
-    list = await svc.list_categories(user_id=10)
+    list = await svc.list_categories(user_id=10, year=2024, month=5)
 
 
     assert [category.name for category in list] == ["Rent", "Movies"]
-    assert repo.listed_for == [10]
+
+    assert len(repo.listed_for) == 1
+    user_id, start_date, end_date = repo.listed_for[0]
+
+    assert user_id == 10
+    assert start_date.year == 2024
+    assert start_date.month == 5
+    assert end_date.year == 2024
+    assert end_date.month == 6
+    assert start_date <= end_date
+
+
+# TC-BC-LIST-002: List categories defaulting to current month and year
+@pytest.mark.anyio
+async def test_list_categories_default_month(svc, monkeypatch):
+    repo = svc.budget_repo
+
+    _createCategory(repo, id=1, user_id=10, name="Rent", amt="1200.00", group="Expenses")
+
+    from app.services import budget_service
+
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2025, 11, 15)
+
+    monkeypatch.setattr(budget_service, "date", FixedDate)
+
+
+    result = await svc.list_categories(user_id=10)
+
+    assert [category.name for category in result] == ["Rent"]
+
+    assert len(repo.listed_for) == 1
+    user_id, start_date, end_date = repo.listed_for[0]
+
+    assert user_id == 10
+    assert start_date.year == 2025
+    assert start_date.month == 11
+    assert end_date.year == 2025
+    assert end_date.month == 12
+    assert start_date <= end_date
+
+
+# TC-BC-LIST-003: List categories with default month but year passed by request
+@pytest.mark.anyio
+async def test_list_categories_pass_year(svc, monkeypatch):
+    repo = svc.budget_repo
+    _createCategory(repo, id=1, user_id=10, name="Rent", amt="1200.00", group="Expenses")
+
+    from app.services import budget_service
+
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2023, 11, 15)
+
+    monkeypatch.setattr(budget_service, "date", FixedDate)
+
+
+    result = await svc.list_categories(user_id=10, year=2022)
+
+    assert [category.name for category in result] == ["Rent"]
+
+    assert len(repo.listed_for) == 1
+    user_id, start_date, end_date = repo.listed_for[0]
+
+    assert user_id == 10
+    assert start_date.year == 2022
+    assert end_date.year == 2022
+    assert start_date.month == 11
+    assert end_date.month == 12
+    assert start_date <= end_date
 
 
 # TC-BC-CREATE-001: base scenario, create category

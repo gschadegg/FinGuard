@@ -22,8 +22,8 @@ const formatCurrency = (n) =>
 export default function BudgetCategoryCard({
   categoryId,
   name = '',
-  spent = 100,
-  budget = 200,
+  spent = 0,
+  budget = 0,
   onEdit,
   onDelete,
 }) {

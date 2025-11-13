@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from fastapi import HTTPException
@@ -6,13 +7,41 @@ from app.db_interfaces import BudgetCategoryRepo
 
 ALLOWED_GROUPS = {"Expenses", "Entertainment", "Savings"}
 
+
+def _time_bounds(year: int, month: int):
+    start = date(year, month, 1)
+    if month == 12:
+        end = date(year + 1, 1, 1)
+    else:
+        end = date(year, month + 1, 1)
+    return start, end
+
+
+
 class BudgetService:
     def __init__(self, budget_repo: BudgetCategoryRepo):
         self.budget_repo = budget_repo
 
-    async def list_categories(self, user_id: int):
-        return await self.budget_repo.list_by_user(user_id)
+    async def list_categories(
+            self, 
+            user_id: int, 
+            year: int | None = None,
+            month: int | None = None,
+        ):
 
+        today = date.today()
+        if year is None:
+            year = today.year
+        if month is None:
+            month = today.month
+
+        start_date, end_date = _time_bounds(year, month)
+
+        return await self.budget_repo.list_by_user(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
     async def create_category(self, user_id: int, name: str, allotted_amount: Decimal, group: str):
 

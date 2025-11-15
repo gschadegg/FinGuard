@@ -130,3 +130,37 @@ class BudgetCategoryEntity(BaseModel):
     updated_at: datetime | None
 
     model_config = dict(from_attributes=True)
+
+
+
+class DashboardBudgetSummary(BaseModel):
+    spent: Decimal = Field(default=Decimal("0"))
+    budget: Decimal = Field(default=Decimal("0"))
+    available: Decimal = Field(default=Decimal("0"))
+
+
+class DashboardCategoryRollup(BaseModel):
+    category_id: Optional[int]
+    name: str
+    amount: Decimal
+    percent: float
+
+class DashboardAccountSummary(BaseModel):
+    id: int
+    name: str
+    mask: Optional[str]
+    type: Optional[str]
+    subtype: Optional[str]
+    institution_name: Optional[str]
+    balance: Decimal
+    available: Optional[Decimal]
+    selected: bool
+
+
+class DashboardEntity(BaseModel):
+    period: object
+    totals: Decimal
+    risk_data: object
+    budget: DashboardBudgetSummary
+    spending_categories: List[DashboardCategoryRollup]
+    accounts: List[DashboardAccountSummary]

@@ -6,6 +6,7 @@ from app.config import get_settings
 from app.services.account_service import AccountService
 from app.services.auth_service import AuthService
 from app.services.budget_service import BudgetService
+from app.services.dashboard_service import DashboardService
 from app.services.fraud_detection_service import FraudDetectionService
 from app.services.plaid_service import PlaidService
 from app.services.transaction_service import TransactionService
@@ -101,3 +102,17 @@ async def get_budget_service(
 
     repo = SqlBudgetCategoryRepo(db)
     return BudgetService(repo)
+
+
+async def get_dashboard_service(
+        db: AsyncSession = Depends(get_db),
+        account_svc: AccountService = Depends(get_account_service),
+        budget_svc: BudgetService = Depends(get_budget_service),
+        transaction_svc: TransactionService = Depends(get_transaction_service),
+    ) -> DashboardService:
+
+    return DashboardService(
+        account_svc=account_svc,
+        budget_svc= budget_svc,
+        transaction_svc=transaction_svc
+    )

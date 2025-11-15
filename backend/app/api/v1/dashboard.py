@@ -1,12 +1,11 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+
 from app.domain.entities import DashboardEntity
-
 from app.security.auth import get_current_user
-from app.services_container import get_dashboard_service
-
 from app.services.dashboard_service import DashboardService
+from app.services_container import get_dashboard_service
 
 router = APIRouter(
     prefix="/dashboard",

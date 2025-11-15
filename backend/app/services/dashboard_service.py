@@ -78,8 +78,16 @@ class DashboardService:
             account_summaries.append(
                 DashboardAccountSummary(
                     id=account.id,
-                    name=account.plaid.name if account.plaid and account.plaid.name else account.name,
-                    mask=account.plaid.mask if account.plaid and account.plaid.mask else account.mask,
+                    name=(
+                        account.plaid.name 
+                        if account.plaid and account.plaid.name 
+                        else account.name
+                    ),
+                    mask=(
+                        account.plaid.mask 
+                        if account.plaid and account.plaid.mask 
+                        else account.mask
+                    ),
                     type=account.type,
                     subtype=account.subtype,
                     institution_name=account.institution_name,
@@ -150,6 +158,7 @@ class DashboardService:
             totals=totals, # total balance of accounts
             risk_data=risk_rollup,  # risk tiers w/ counts and count for each account
             budget=budget_summary, # budget total numbers
-            spending_categories=spending_categories, # list of categories and percentage of budget spent
+            # list of categories and percentage of budget spent
+            spending_categories=spending_categories, 
             accounts=account_summaries,  # list of accounts and their details
         )

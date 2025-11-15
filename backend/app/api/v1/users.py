@@ -1,10 +1,7 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from app.domain.errors import NotFoundError
 from app.security.auth import get_current_user
-from app.services.user_service import UserService
-from app.services_container import get_user_service
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)] )
 

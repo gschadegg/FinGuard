@@ -9,6 +9,7 @@ from app.api.v1.budget import router as budget_router
 from app.api.v1.plaid import router as plaid_router
 from app.api.v1.transactions import router as transaction_router
 from app.api.v1.users import router as users_router
+from app.api.v1.dashboard import router as dashboard_router
 from infrastructure.db.session import lifespan
 
 app = FastAPI(lifespan=lifespan)
@@ -20,7 +21,7 @@ app.include_router(accounts_router)
 app.include_router(transaction_router)
 app.include_router(plaid_router)
 app.include_router(budget_router)
-
+app.include_router(dashboard_router)
 
 
 # @app.get("/debug/env")

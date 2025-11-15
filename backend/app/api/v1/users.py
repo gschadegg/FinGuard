@@ -27,9 +27,9 @@ router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_cu
 #     except NotFoundError as e:
 #         raise HTTPException(status_code=404, detail=str(e))
 
-@router.delete("/{user_id}", status_code=204)
-async def delete_user(user_id: int, svc: UserService = Depends(get_user_service)):
-    try:
-        await svc.delete_user(user_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+# @router.delete("/{user_id}", status_code=204)
+# async def delete_user(user_id: int, svc: UserService = Depends(get_user_service)):
+#     try:
+#         await svc.delete_user(user_id)
+#     except NotFoundError as e:
+#         raise HTTPException(status_code=404, detail=str(e))

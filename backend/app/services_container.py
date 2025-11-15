@@ -10,6 +10,8 @@ from app.services.fraud_detection_service import FraudDetectionService
 from app.services.plaid_service import PlaidService
 from app.services.transaction_service import TransactionService
 from app.services.user_service import UserService
+from app.services.dashboard_service import DashboardService
+
 from infrastructure.db.repos.account_repo import SqlAccountRepo
 from infrastructure.db.repos.budget_category_repo import SqlBudgetCategoryRepo
 from infrastructure.db.repos.connectionItem_repo import SqlConnectionItemRepo
@@ -101,3 +103,17 @@ async def get_budget_service(
 
     repo = SqlBudgetCategoryRepo(db)
     return BudgetService(repo)
+
+
+async def get_dashboard_service(
+        db: AsyncSession = Depends(get_db),
+        account_svc: AccountService = Depends(get_account_service),
+        budget_svc: BudgetService = Depends(get_budget_service),
+        transaction_svc: TransactionService = Depends(get_transaction_service),
+    ) -> DashboardService:
+
+    return DashboardService(
+        account_svc=account_svc,
+        budget_svc= budget_svc,
+        transaction_svc=transaction_svc
+    )

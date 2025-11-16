@@ -42,7 +42,8 @@ class MockTransactionRepo:
             *,
             selected_only: bool, 
             limit: int, 
-            cursor: Optional[str]
+            cursor: Optional[str],
+            high_risk_only: bool
         ) -> dict:
 
         self.page_user["_last_args"] = dict(
@@ -51,7 +52,8 @@ class MockTransactionRepo:
             end=end,
             selected_only=selected_only, 
             limit=limit, 
-            cursor=cursor
+            cursor=cursor,
+            high_risk_only= high_risk_only
         )
 
         return {key: val for key, val in self.page_user.items() if key != "_last_args"}
@@ -354,12 +356,12 @@ async def test_list_user_get(svc):
         "items": [{"id": 1}], "next_cursor": "nc", "has_more": True
     }
     out = await svc.list_user(user_id=9, start=date(2025, 1, 1), end=None,
-                              selected_only=False, limit=5, cursor="cur-x")
+                              selected_only=False, limit=5, cursor="cur-x", high_risk_only=False)
 
     assert out == {"items": [{"id": 1}], "next_cursor": "nc", "has_more": True}
     assert svc.transaction_repo.page_user["_last_args"] == {
         "user_id": 9, "start": date(2025, 1, 1), "end": None,
-        "selected_only": False, "limit": 5, "cursor": "cur-x",
+        "selected_only": False, "limit": 5, "cursor": "cur-x", "high_risk_only":False
     }
 
 

@@ -74,7 +74,8 @@ class TransactionRepo(Protocol):
             *, 
             selected_only: bool, 
             limit: int, 
-            cursor: str | None
+            cursor: str | None,
+            high_risk_only:bool
     ) -> dict: ...
     async def list_by_account_paginated(
             self, 

@@ -1,105 +1,70 @@
 'use client'
 
-import { useCallback } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react'
+import { TotalBalanceCard } from '@/components/dashboard-widgets/TotalBalanceCard'
+import { HighRiskCard } from '@/components/dashboard-widgets/HighRiskCard'
+import { AccountsCard } from '@/components/dashboard-widgets/AccountsCard'
+import { DashboardSkeleton } from '@/components/dashboard-widgets/skeleton'
+import { GET_DASHBOARD_DATA } from '@/lib/api_urls'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { useNotify } from '@/components/notification/NotificationProvider'
+import PageLayout from '@/components/layouts/page-layout'
+import { useRouter } from 'next/navigation'
 import { useUserContext } from '@/components/user-data'
 
 export default function Home() {
-  const { accounts, refreshAccounts } = useUserContext()
+  const router = useRouter()
+  const { makeAuthRequest } = useAuth()
+  const { setAccountsTotal } = useUserContext()
+  const notify = useNotify()
+  const [data, setData] = useState(null)
 
-  const getAccountsTest = useCallback(async () => {
-    await refreshAccounts()
-  }, [refreshAccounts])
+  const handleClickViewTransactions = () => {
+    router.push('/accounts?high_risk_only=true')
+  }
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const res = await makeAuthRequest(GET_DASHBOARD_DATA)
+        if (res) {
+          console.log('res', res)
+          setData(res)
+          console.log('res?.totals', res?.totals)
+          setAccountsTotal(res?.totals ?? '0.00')
+        }
+      } catch {
+        notify({
+          type: 'error',
+          title: 'Dashboard Error',
+          message: 'Experienced issues fetching dashboard data, please try again.',
+        })
+      }
+    }
+    fetchDashboardData()
+  }, [notify, makeAuthRequest, setData, setAccountsTotal])
+
+  if (!data) {
+    return <DashboardSkeleton />
+  }
 
   return (
-    // <RequireAuth>
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        FINGUARD DASHBOARD
-        {/* <div>
-          <h1>Home</h1>
-          <Link href="/about">About</Link>
-        </div> */}
-        {/* <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        /> */}
-        {/* <button onClick={pingApiTest}>Hit REST via Next proxy</button> */}
-        {/* <pre>{dataResult ? JSON.stringify(dataResult, null, 2) : 'No result yet'}</pre> */}
-        <Button onClick={getAccountsTest}>Get Users Accounts</Button>
-        <pre>{accounts ? JSON.stringify(accounts, null, 2) : 'No result yet'}</pre>
-        {/* <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-        </ol>
-        <div className="bg-background text-foreground">testing ShadCN</div>
-        <ModeToggle /> */}
-        {/* <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <PageLayout pageTitle="Dashboard" subTitle={data?.period?.label || ''}>
+      <div className="space-y-8 w-full">
+        {/*p-8  */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {/* contains the 3 stacked in left col */}
+            <TotalBalanceCard total={data?.totals} />
+            <HighRiskCard
+              count={data?.risk_data?.risks?.pending_high}
+              onViewTransactions={handleClickViewTransactions}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div> */}
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        {/* <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a> */}
-      </footer>
-    </div>
-    // </RequireAuth>
+          </div>
+          {/* need my spending widget here */}
+        </div>
+        <AccountsCard accounts={data?.accounts} />
+      </div>
+    </PageLayout>
   )
 }

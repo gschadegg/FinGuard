@@ -38,6 +38,8 @@ export const SET_FRAUD_REVIEW = (transactionId) =>
 
 export const GET_RISKS_ROLLUP = `${ROOT}/transactions/rollups`
 
+export const GET_DASHBOARD_DATA = `${ROOT}/dashboard`
+
 const withQuery = (url, params) => {
   if (!params) return url
   const query = new URLSearchParams(params).toString()

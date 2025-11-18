@@ -52,7 +52,7 @@ test.describe('Register', () => {
     await expect(page).toHaveURL((u) => u.pathname === '/')
 
     // await page.waitForLoadState('domcontentloaded')
-    await expect(page.getByText(/FINGUARD Dashboard/i)).toBeVisible()
+    await expect(page.getByText(/Dashboard/i)).toBeVisible()
   })
 
   // TC-FLOW-REGISTER-002

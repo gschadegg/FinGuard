@@ -83,7 +83,8 @@ class TransactionService:
     # pagination reading
     async def list_user(self, user_id: int, start: date | None, end: date | None, *,
                         selected_only: bool = True, 
-                        limit: int = 50, cursor: str | None = None) -> TransactionsPageEntity:
+                        limit: int = 50, cursor: str | None = None,
+                        high_risk_only: bool = False) -> TransactionsPageEntity:
         
         return await self.transaction_repo.list_by_user_paginated(
             user_id, 
@@ -91,7 +92,8 @@ class TransactionService:
             end, 
             selected_only=selected_only, 
             limit=limit, 
-            cursor=cursor
+            cursor=cursor,
+            high_risk_only=high_risk_only
         )
 
 

@@ -56,13 +56,17 @@ async def list_user_transactions(
     limit: int = Query(50, ge=1, le=200),
     cursor: Optional[str] = Query(None),
     refresh: bool = Query(False, description="if true, sync all user items before listing"),
+    high_risk_only: bool = Query(False,  
+                                 description="if true, return only " \
+                                 "non-reviewed high risk transactions"),
     svc: TransactionService = Depends(get_transaction_service),
     current_user = Depends(get_current_user)
 ):
     if refresh:
         await svc.sync_user(current_user.id)
     return await svc.list_user(current_user.id, start, end, 
-                               selected_only=selected, limit=limit, cursor=cursor)
+                               selected_only=selected, limit=limit, 
+                               cursor=cursor, high_risk_only=high_risk_only)
 
 
 # getting transactions by account id, paginated

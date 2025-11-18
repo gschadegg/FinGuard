@@ -11,6 +11,7 @@ export const UserProvider = ({ children }) => {
   const notify = useNotify()
   const { user, makeAuthRequest } = useAuth()
   const [accounts, setAccounts] = useState(null)
+  const [accountsTotal, setAccountsTotal] = useState(null)
   const [_isLoading, _setIsLoading] = useState(false)
 
   const getAccounts = useCallback(async () => {
@@ -38,7 +39,15 @@ export const UserProvider = ({ children }) => {
 
   return (
     <UserContext.Provider
-      value={{ user: user, userId: user?.id, accounts, _isLoading, refreshAccounts: getAccounts }}
+      value={{
+        user: user,
+        userId: user?.id,
+        accounts,
+        _isLoading,
+        accountsTotal,
+        setAccountsTotal,
+        refreshAccounts: getAccounts,
+      }}
     >
       {children}
     </UserContext.Provider>

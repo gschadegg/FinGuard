@@ -95,7 +95,8 @@ class SqlTransactionRepo:
 
     async def list_by_user_paginated(
         self, user_id: int, start_date: date | None, end_date: date | None,
-        *, selected_only: bool = True, limit: int, cursor: str | None
+        *, selected_only: bool = True, limit: int, cursor: str | None, 
+        high_risk_only: bool = False
     ) -> dict:
         limit = max(1, min(limit or PAGE_DEFAULT, PAGE_MAX))
 
@@ -103,6 +104,13 @@ class SqlTransactionRepo:
             Transaction.user_id == user_id,
             Transaction.removed.is_(False),
         )
+
+        if high_risk_only:
+            transactions = transactions.where(
+                Transaction.is_fraud_suspected.is_(True),
+                Transaction.fraud_review_status == "pending",
+            )
+            
         if start_date:
             transactions = transactions.where(Transaction.date >= start_date)
         if end_date:

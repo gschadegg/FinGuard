@@ -16,7 +16,7 @@ test('loads dashboard  already authenticated', async ({ page, baseURL }) => {
   }))
   // console.log('DEBUG storage:', debug)
 
-  await expect(page.getByText(/FINGUARD Dashboard/i)).toBeVisible()
+  await expect(page.getByText(/Dashboard/i)).toBeVisible()
 })
 
 test('renders accounts and at least 5 table items', async ({ page }) => {

@@ -17,15 +17,9 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 
 import { DollarSign, ShieldAlert, Loader } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 const STALE_DATA = 5 * 60 * 1000
-
-const formatCurrency = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
 
 export default function AccountsPage() {
   const notify = useNotify()
@@ -99,11 +93,6 @@ export default function AccountsPage() {
         title: 'Total Balance',
         detail: formatCurrency(accountsTotal),
         icon: DollarSign,
-      },
-      {
-        title: 'Pending Transations',
-        detail: '-$1,250.00',
-        icon: Loader,
       },
       {
         title: 'Potential High Risks',

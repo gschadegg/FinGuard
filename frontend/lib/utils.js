@@ -25,3 +25,10 @@ export function isExpired(token) {
   if (!exp) return false
   return Math.floor(Date.now() / 1000) >= exp
 }
+
+export const formatCurrency = (num) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(num)

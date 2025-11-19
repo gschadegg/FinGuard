@@ -54,7 +54,6 @@ export function DashboardSkeleton() {
         <div className="p-6 border rounded-lg space-y-4">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-5 w-5 rounded-full" />
           </div>
 
           <div className="flex items-center justify-center py-4">

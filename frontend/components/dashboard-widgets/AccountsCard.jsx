@@ -1,13 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RefreshCcw, RefreshCwOff } from 'lucide-react'
-
-const formatCurrency = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
+import { formatCurrency } from '@/lib/utils'
 
 export function AccountsCard({ accounts, title = 'Accounts' }) {
   return (

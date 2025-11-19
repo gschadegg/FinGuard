@@ -10,14 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
-import { cn } from '@/lib/utils'
-
-const formatCurrency = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
+import { cn, formatCurrency } from '@/lib/utils'
 
 export default function BudgetCategoryCard({
   categoryId,

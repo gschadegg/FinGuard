@@ -1,12 +1,6 @@
 import { DashboardCard } from './DashboardCard'
 import { DollarSign } from 'lucide-react'
-
-const formatCurrency = (n) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
+import { formatCurrency } from '@/lib/utils'
 
 export function TotalBalanceCard({ total = '0.00' }) {
   return (

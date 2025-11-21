@@ -28,21 +28,6 @@ test.describe('Login', () => {
 
   //TC-FLOW-LOGIN-001
   test('handles successful login', async ({ page }) => {
-    await page.route(
-      '**/api/auth/login',
-      (route) =>
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            access_token: 'test-token',
-            token_type: 'bearer',
-            user: { id: 1, email: process.env.E2E_EMAIL || 'a@b.com', name: 'Ok' },
-          }),
-        }),
-      { times: 1 }
-    )
-
     await page.getByPlaceholder(/name@example.com/i).fill(process.env.E2E_EMAIL || 'a@b.com')
     await page.getByPlaceholder(/Password/i).fill(process.env.E2E_PASSWORD || 'secretpassword')
 
@@ -52,8 +37,11 @@ test.describe('Login', () => {
 
     await page.getByRole('button', { name: /Login/i }).click()
 
-    await page.waitForLoadState('domcontentloaded')
+    await respPromise
+    await page.waitForURL('/')
+
     await expect(page).toHaveURL((url) => url.pathname === '/')
+    await expect(page.getByTestId('dashboard-skeleton')).toBeVisible()
   })
 
   //TC-FLOW-LOGIN-002

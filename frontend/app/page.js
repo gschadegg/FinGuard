@@ -31,7 +31,6 @@ export default function Home() {
       try {
         const res = await makeAuthRequest(GET_DASHBOARD_DATA)
         if (res) {
-          console.log('res', res)
           setData(res)
           setAccountsTotal(res?.totals ?? '0.00')
         }
@@ -51,7 +50,11 @@ export default function Home() {
   }
 
   return (
-    <PageLayout pageTitle="Dashboard" subTitle={data?.period?.label || ''}>
+    <PageLayout
+      pageTitle="Dashboard"
+      subTitle={data?.period?.label || ''}
+      data-testid="dashboard-page"
+    >
       <div className="space-y-8 w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -64,7 +67,7 @@ export default function Home() {
           </div>
           <SpendingCategoriesCard
             spendingCategories={data?.spending_categories}
-            period={data?.period.label}
+            period={data?.period?.label}
           />
         </div>
         <AccountsCard accounts={data?.accounts} />

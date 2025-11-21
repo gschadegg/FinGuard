@@ -1,7 +1,7 @@
 'use client'
-const PageLayout = ({ children, pageTitle, subTitle, action: Action }) => {
+const PageLayout = ({ children, pageTitle, subTitle, action: Action, ...props }) => {
   return (
-    <main className="flex-1 p-6">
+    <main className="flex-1 p-6" {...props}>
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between mb-15">
           <h1 className="text-2xl font-semibold tracking-tight">

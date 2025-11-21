@@ -10,12 +10,13 @@ export function BudgetCard({ budgetTotal = 0, spentTotal = 0 }) {
   return (
     <DashboardCard
       title={`${new Date().toLocaleString('default', { month: 'long' }) || 'Current Month'} Budget`}
+      data-testid="budget-card"
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-end justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-xs tracking-wide text-muted-foreground">Spent</span>
-            <span className="text-2xl font-semibold text-red-500">
+            <span className="text-2xl font-semibold text-red-500" data-testid="budget-spent">
               {formatCurrency(spentTotal)}
             </span>
           </div>
@@ -27,7 +28,10 @@ export function BudgetCard({ budgetTotal = 0, spentTotal = 0 }) {
 
           <div className="flex flex-col gap-1">
             <span className="text-xs tracking-wide text-muted-foreground ">Available</span>
-            <span className="text-2xl font-semibold text-emerald-500">
+            <span
+              className="text-2xl font-semibold text-emerald-500"
+              data-testid="budget-available"
+            >
               {formatCurrency(remaining)}
             </span>
           </div>

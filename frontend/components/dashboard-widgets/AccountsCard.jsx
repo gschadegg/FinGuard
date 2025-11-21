@@ -5,7 +5,7 @@ import { formatCurrency } from '@/lib/utils'
 
 export function AccountsCard({ accounts, title = 'Accounts' }) {
   return (
-    <Card className="shadow-sm w-full">
+    <Card className="shadow-sm w-full" data-testid="accounts-card">
       <div className="flex items-center justify-between px-6 py-1 ">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-medium flex items-center gap-2">{title}</h2>
@@ -30,7 +30,10 @@ export function AccountRow({ account }) {
   const isSynced = selected === true
 
   return (
-    <Card className={'shadow-none flex-row px-5 py-4 flex items-center justify-between border'}>
+    <Card
+      className={'shadow-none flex-row px-5 py-4 flex items-center justify-between border'}
+      data-testid="account-row"
+    >
       <div className="flex flex-col gap-1 min-w-0">
         <span className="text-sm font-medium truncate">{`${institution_name}: ${name}`}</span>
         <span className="text-xs text-muted-foreground">••••••••{mask}</span>

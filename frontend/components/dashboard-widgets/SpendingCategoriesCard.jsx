@@ -28,7 +28,7 @@ export function SpendingCategoriesCard({
   }))
 
   return (
-    <DashboardCard title={title}>
+    <DashboardCard title={title} data-testid="spending-categories-card">
       <div className="flex flex-col gap-1">
         <p className="text-xs text-muted-foreground">{`${period}`}</p>
 

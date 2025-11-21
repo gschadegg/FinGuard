@@ -20,7 +20,14 @@ import BudgetCategoryCard from '@/components/category-card'
 
 import CategoryModal from '@/components/modals/CategoryModal'
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal'
-import { formatCurrency } from '@/lib/utils'
+// import { formatCurrency } from './../../lib/utils'
+
+const formatCurrency = (n) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(n)
 
 const CATEGORY_GROUPS = ['Expenses', 'Savings', 'Entertainment']
 

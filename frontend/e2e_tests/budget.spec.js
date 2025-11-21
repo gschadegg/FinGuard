@@ -4,7 +4,6 @@ import { test, expect } from '@playwright/test'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
-const goto = (page, baseURL, path) => page.goto(new URL(path, baseURL).toString())
 const isCatsUrl = (u) => /\/api\/budgets\/categories(?:[/?]|$)/.test(u)
 
 test.describe('Budget', () => {

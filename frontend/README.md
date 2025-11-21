@@ -1,5 +1,7 @@
 This is the presentation layer for FinGuard built with NextJS
 
+_Note: the setup here focuses on local dev env for the Frontend, for Docker setup view the [root level README](../README.md)_
+
 ## Setup
 
 _uses pnpm_
@@ -11,7 +13,7 @@ _uses pnpm_
 
 #### Running
 
-- Dev Server: `pnpm dev`
+- Dev Server: `pnpm run dev`
 - Production Build: `pnpm build && pnpm start`
 
 #### Testing

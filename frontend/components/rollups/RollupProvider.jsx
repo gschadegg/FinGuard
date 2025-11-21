@@ -8,7 +8,7 @@ import { GET_RISKS_ROLLUP } from '@/lib/api_urls'
 const RollupsContext = createContext(null)
 
 export function RollupsProvider({ children, pollInMsecs = 60000 }) {
-  const { makeAuthRequest } = useAuth()
+  const { makeAuthRequest, user } = useAuth()
   const [risks, setRisks] = useState({
     pending_total: 0,
     pending_high: 0,
@@ -27,10 +27,16 @@ export function RollupsProvider({ children, pollInMsecs = 60000 }) {
   }, [makeAuthRequest])
 
   useEffect(() => {
-    refresh()
-    const id = setInterval(refresh, pollInMsecs)
-    return () => clearInterval(id)
-  }, [refresh, pollInMsecs])
+    let id
+    if (user !== null) {
+      refresh()
+      id = setInterval(refresh, pollInMsecs)
+    }
+
+    return () => {
+      if (id) clearInterval(id)
+    }
+  }, [refresh, pollInMsecs, user])
 
   const value = useMemo(() => ({ risks, byAccount, refresh }), [risks, byAccount, refresh])
 

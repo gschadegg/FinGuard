@@ -14,9 +14,8 @@ test('loads dashboard  already authenticated', async ({ page, baseURL }) => {
     token: localStorage.getItem('finguard_auth_token'),
     user: localStorage.getItem('finguard_auth_user'),
   }))
-  // console.log('DEBUG storage:', debug)
 
-  await expect(page.getByText(/Dashboard/i)).toBeVisible()
+  await expect(page.getByTestId('dashboard-page').getByText(/Dashboard/i)).toBeVisible()
 })
 
 test('renders accounts and at least 5 table items', async ({ page }) => {

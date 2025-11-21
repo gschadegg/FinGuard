@@ -1,6 +1,7 @@
 import UserAccountMockData from './UserAccountsData'
 import TransactionMockData from './TransactionData'
 import BudgetCategoriesMockData from './BudgetCategoriesData'
+import DashboardMockData from './DashboardData'
 import { NextResponse } from 'next/server'
 
 function makeFakeJwt(email, uid, ttlSec = 3600) {
@@ -61,6 +62,19 @@ function computeRiskRollupsForUser(userId) {
 export async function mockHandlers(req, pathAfterApi) {
   if (pathAfterApi.startsWith('accounts')) {
     return ok(UserAccountMockData)
+  }
+
+  if (pathAfterApi.startsWith('dashboard')) {
+    const referer = req.headers.get('referer') || ''
+    const refUrl = new URL(referer)
+
+    const delay = Number(refUrl.searchParams.get('__delay') || '0')
+
+    if (delay > 0) {
+      await new Promise((r) => setTimeout(r, delay))
+    }
+
+    return ok(DashboardMockData)
   }
 
   if (pathAfterApi.startsWith('transactions')) {

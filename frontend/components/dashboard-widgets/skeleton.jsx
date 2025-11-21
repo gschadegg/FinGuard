@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function DashboardSkeleton() {
   return (
-    <div className="p-8 space-y-8 w-full">
+    <div className="p-8 space-y-8 w-full" data-testid="dashboard-skeleton">
       <div className="flex items-center gap-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-6 w-24" />
@@ -54,7 +54,6 @@ export function DashboardSkeleton() {
         <div className="p-6 border rounded-lg space-y-4">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-5 w-5 rounded-full" />
           </div>
 
           <div className="flex items-center justify-center py-4">

@@ -3,10 +3,12 @@
   "private": true,
   "packageManager": "pnpm@10.15.1",
   "scripts": {
-    "dev": "pnpm -r --parallel run dev",
-    "dev:frontend": "pnpm -C frontend run dev",
-    "dev:backend": "pnpm -C backend run dev",
-    "test": "pnpm -r run test",
-    "lint": "pnpm -r run lint"
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:restart": "docker compose down && docker compose up -d --build",
+    "docker:db:reset": "docker compose down -v && docker compose up -d --build",
+    "docker:backend:migrate": "docker compose exec backend alembic upgrade head",
+    "docker:backend:seed": "docker compose exec backend python -m seed.seed",
+    "docker:up:setup": "pnpm run docker:up && pnpm run docker:backend:migrate && pnpm run docker:backend:seed"
   }
 }

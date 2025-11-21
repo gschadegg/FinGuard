@@ -2,7 +2,7 @@
 import { proxyJson } from '@/lib/proxy'
 import { mockHandlers } from '@/e2e_tests/mocks/handlers'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const PROXY_API_PREFIX = '/api'
 
 function buildTarget(req) {

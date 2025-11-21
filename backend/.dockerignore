@@ -1,0 +1,18 @@
+# Node / pnpm
+node_modules
+.pnpm-store
+pnpm-lock.yaml
+
+# Python
+.venv
+__pycache__
+*.pyc
+
+# Misc
+.env
+.env.*
+.git
+.gitignore
+.idea
+.vscode
+.DS_Store

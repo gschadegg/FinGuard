@@ -1,6 +1,7 @@
 This is the persistence layer documentation for FinGuard built with PostgresSQL, Docker, and sqlAlchemy.
 
 All Models and Repositories are located at: `/backend/infrastructure`
+all scripts are ran in `./backend`
 
 ## Initial Local Setup
 
@@ -9,7 +10,7 @@ To create a new local dev database environment run the following commands:
 - `cd backend`
 - `pnpm run init-setup`
 
-The `init-setup` script will automatically run the following scripts that sets up the backend and database:
+The `init-setup` script will automatically run the following scripts that sets up the backend and database (all scripts are ran in `./backend`):
 
 - Creates venv: `pnpm run venv:create`
 - Install dependencies: `pnpm run req:install`

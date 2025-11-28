@@ -1,5 +1,7 @@
 This is the service layer for FinGuard built with FastAPI & Python
 
+_Note: the setup here focuses on local dev env for the API and DB, for Docker setup view the [root level README](../README.md)_
+
 ## Setup
 
 _uses pnpm for easy access scripts_
@@ -11,11 +13,22 @@ To create a new local dev database and API environment run the following command
 - `cd backend`
 - `pnpm run init-setup`
 
-To install dependencies running the following scripts:
+_This will create local .venv, install py dependencies, start local db and run alembic migrations, seed the DB, and start the API_
+
+If you only need to install dependencies, run the following scripts:
 
 - `cd backend`
 - `pnpm install --frozen-lockfile`
 - `pnpm run req:install`
+
+#### Running
+
+Running after setup (if init-setup has been previously ran):
+
+- Start DB: `pnpm run db:up`
+- Start API: `pnpm run dev`
+
+_API will be available at http://localhost:8000_
 
 ### ML local Environment
 
@@ -27,9 +40,11 @@ To create ML env, install dependencies and register as a kernal, run the followi
 - `pnpm run init-setup:ml`
 - In VS Code, navigate to jupiter notebook files in `backend/fraud-detection` folder
 - Select `Select Kernal` in top right, select `Jupiter kernal...` and then click the refresh icon
-- Select `FinGuard-ML` environment
+- Select `FinGuard-ML` (.venv-ml) environment
 
 _Note: synthetic data needs to be created by running the notebook file `Synthetic-Data-Creation` before being able to run `Fraud-Detection-Model-final` to re-train and create the Fraud Detection model._
+
+##
 
 ##### Additional Scripts Available
 
@@ -41,10 +56,6 @@ _Note: synthetic data needs to be created by running the notebook file `Syntheti
 - API Env: `.venv\Scripts\activate`
 - ML Env: `.venv-ml\Scripts\activate`
 
-#### Running
-
-- Dev Server: `pnpm run dev`
-
 #### Open Swagger Docs
 
 Run `pnpm run dev` and visit `http://localhost:8000/docs`
@@ -52,7 +63,7 @@ Run `pnpm run dev` and visit `http://localhost:8000/docs`
 #### Testing
 
 - Unit & Module Tests `pnpm run test`
-- Postman Tests: `pnpm run postman:test`
+- With Coverage `pnpm run test:coverage`
 
 #### QA & Metrics
 
@@ -72,5 +83,4 @@ Using Plaid API Sandbox data exclusively.
 | --------- | --------------------- |
 | FastAPI   | Framework             |
 | PyTest    | Unit & Module testing |
-| Postman   | System testing        |
 | Plaid API | Transactional Data    |

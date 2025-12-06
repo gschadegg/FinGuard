@@ -125,7 +125,7 @@ export function TransactionDataTable({ columns, pager }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.{`${JSON.stringify(pager)}`}
+                  No results.
                   {pager?.error} {pager?.isLoading}
                 </TableCell>
               </TableRow>

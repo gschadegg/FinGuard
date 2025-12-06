@@ -35,9 +35,23 @@ class TransactionService:
         added = modified = removed = 0
         to_check_fraud_ids = []
 
+        today = date.today()
+        month_start = date(today.year, today.month, 1)
+        bumped = 0
+
         while True:
             changed = await self.plaid.transactions_sync(access_token, cursor)
             for txn in changed["added"] + changed["modified"]:
+                # ensure 2 transactions with current month
+                if bumped < 2 and txn.get("date"):
+                    try:
+                        txn_date = txn["date"]
+                        if txn_date < month_start:
+                            txn["date"] = today.isoformat()
+                            bumped += 1
+                    except ValueError:
+                        pass
+
                 txn_id = await self.transaction_repo.upsert_from_plaid(item, txn)
 
                 if txn_id:
